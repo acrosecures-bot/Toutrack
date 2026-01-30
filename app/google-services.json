@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "426865781508",
+    "project_id": "tour-track-ddb18",
+    "storage_bucket": "tour-track-ddb18.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:426865781508:android:6879cb0c0ef0931e55be51",
+        "android_client_info": {
+          "package_name": "com.example.tourist_main"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDq4LPl9rOxp5jhZMNQfjZpo1iH_c4dUEw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

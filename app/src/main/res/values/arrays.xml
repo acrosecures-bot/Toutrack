@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Options for Emergency Contacts - Relation Spinners -->
+    <string-array name="relation_options">
+        <item>Friend</item>
+        <item>Family</item>
+        <item>Colleague</item>
+    </string-array>
+
+    <!-- Options for Location & Tracking - Location sharing Spinner -->
+    <string-array name="location_sharing_options">
+        <item>Emergency contacts</item>
+        <item>Only me</item>
+        <item>Public</item>
+    </string-array>
+
+    <!-- Options for Location & Tracking - Precision Spinner -->
+    <string-array name="precision_options">
+        <item>Balanced</item>
+        <item>High</item>
+        <item>Low</item>
+    </string-array>
+
+    <!-- Options for Privacy & Language - Data retention Spinner -->
+    <string-array name="data_retention_options">
+        <item>30 days</item>
+        <item>90 days</item>
+        <item>1 year</item>
+    </string-array>
+
+    <!-- Options for Privacy & Language - Language Spinner -->
+    <string-array name="language_options">
+        <item>English</item>
+        <item>Spanish</item>
+        <item>French</item>
+    </string-array>
+</resources>

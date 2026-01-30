@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scrollRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:gravity="center_horizontal">
+
+        <!-- HERO / LOGO -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_marginBottom="12dp">
+
+            <View
+                android:id="@+id/logoCircle"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_logo_circle" />
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Welcome to Smart Tourist\nSafety"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textColor="#111827" />
+
+            <TextView
+                android:id="@+id/subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="AI-powered safety monitoring"
+                android:textSize="13sp"
+                android:textColor="#6B7280"
+                android:layout_marginTop="6dp" />
+        </LinearLayout>
+
+        <!-- TABS -->
+        <LinearLayout
+            android:id="@+id/tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnRegisterTab"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="48dp"
+                android:gravity="center"
+                android:text="Register"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:drawablePadding="8dp"
+                android:drawableStart="@drawable/ic_register_16"
+                android:textColor="#6B7280"
+                android:background="@android:color/transparent" />
+
+            <Button
+                android:id="@+id/btnSignInTab"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="48dp"
+                android:gravity="center"
+                android:text="Sign In"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:drawableStart="@drawable/ic_signin_16"
+                android:drawablePadding="8dp"
+                android:textColor="#7C3AED"
+                android:background="@android:color/transparent" />
+
+        </LinearLayout>
+
+        <!-- Underline (two segments) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <View
+                android:id="@+id/underlineRegister"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent" />
+
+            <View
+                android:id="@+id/underlineSignIn"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:background="@drawable/grad_tab_active" />
+        </LinearLayout>
+
+        <!-- SIGN IN CARD -->
+        <LinearLayout
+            android:id="@+id/signinCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="18dp"
+            android:layout_marginTop="12dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:layout_marginBottom="8dp">
+
+                <ImageView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_avatar"
+                    android:contentDescription="icon"
+                    android:background="@drawable/avatar_bg"
+                    android:padding="10dp"
+                    app:tint="#111827" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sign In"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="8dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Welcome back! Access your account."
+                    android:textColor="#6B7280"
+                    android:textSize="13sp"
+                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
+
+            <EditText
+                android:id="@+id/signinEmail"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Email Address *"
+                android:inputType="textEmailAddress"
+                android:padding="12dp"
+                android:background="@drawable/input_bg"/>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+
+                <EditText
+                    android:id="@+id/signinPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="Password *"
+                    android:inputType="textPassword"
+                    android:padding="12dp"
+                    android:background="@drawable/input_bg"/>
+
+
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Forgot password?"
+                android:textColor="#581CC3"
+                android:gravity="end"
+                android:layout_marginTop="6dp"
+                android:textSize="13sp"/>
+
+            <Button
+                android:id="@+id/btnSignIn"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/btn_cta"
+                android:drawableStart="@drawable/ic_signin_18"
+                android:drawablePadding="8dp"
+                android:text="Sign In"
+                android:textColor="#E2E2E2" />
+
+        </LinearLayout>
+
+        <!-- REGISTER CARD -->
+        <LinearLayout
+            android:id="@+id/registerCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="18dp"
+            android:layout_marginTop="12dp"
+            android:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_register_18"
+                    android:contentDescription="register icon"
+                    android:tint="#111827"
+                    android:layout_marginEnd="8dp"
+                    tools:ignore="UseAppTint" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Create Account"
+                    android:textStyle="bold"
+                    android:textSize="18sp"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="24dp"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <!-- Profile Image -->
+                <ImageView
+                    android:id="@+id/imgProfile"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_person"
+                    android:contentDescription="Profile Image" />
+
+                <!-- Edit Icon (overlapping using negative margin) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:layout_marginTop="-119dp"
+                    android:layout_marginStart="-20dp"
+                    android:paddingEnd="6dp">
+
+                    <ImageView
+                        android:id="@+id/btnEditProfile"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:padding="6dp"
+                        android:src="@drawable/ic_add"
+                        android:contentDescription="Edit Profile" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+            <!-- Basic fields -->
+            <EditText
+                android:id="@+id/r_fullName"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Full Name *"
+                android:inputType="textPersonName"
+                android:background="@drawable/input_bg"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"/>
+
+            <EditText
+                android:id="@+id/r_Gender"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="gender *"
+                android:inputType="textPersonName"
+                android:background="@drawable/input_bg"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"/>
+
+            <EditText
+                android:id="@+id/r_mobile"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Mobile Number *"
+                android:inputType="phone"
+                android:background="@drawable/input_bg"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"/>
+
+            <EditText
+                android:id="@+id/r_email"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Email Address *"
+                android:inputType="textEmailAddress"
+                android:background="@drawable/input_bg"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"/>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+
+                <EditText
+                    android:id="@+id/r_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="Password *"
+                    android:inputType="textPassword"
+                    android:background="@drawable/input_bg"
+                    android:padding="12dp"/>
+
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+
+                <EditText
+                    android:id="@+id/r_confirm"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="Confirm Password *"
+                    android:inputType="textPassword"
+                    android:background="@drawable/input_bg"
+                    android:padding="12dp"/>
+
+
+            </FrameLayout>
+
+            <!-- Emergency contact -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Emergency Contact" android:textStyle="bold" android:layout_marginTop="12dp"/>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEE" android:layout_marginTop="6dp"/>
+
+            <EditText
+                android:id="@+id/r_emerName"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Person Name *"
+                android:inputType="textPersonName"
+                android:background="@drawable/input_bg"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"/>
+
+            <EditText
+                android:id="@+id/r_emerNo"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Contact Number *"
+                android:inputType="phone"
+                android:background="@drawable/input_bg"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"/>
+
+            <!-- Personal details -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Personal Details" android:textStyle="bold" android:layout_marginTop="12dp"/>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEE" android:layout_marginTop="6dp"/>
+
+            <EditText
+                android:id="@+id/r_dob"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Date of Birth"
+                android:inputType="date"
+                android:background="@drawable/input_bg"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"/>
+
+            <EditText
+                android:id="@+id/r_nationality"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Nationality *"
+                android:inputType="text"
+                android:background="@drawable/input_bg"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"/>
+
+            <EditText
+                android:id="@+id/r_address"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Address *"
+                android:minHeight="80dp"
+                android:gravity="top"
+                android:inputType="textMultiLine"
+                android:background="@drawable/input_bg"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical">
+
+                <CheckBox
+                    android:id="@+id/r_agree"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="I agree to Terms &amp; Privacy"
+                    android:layout_marginStart="8dp"/>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnRegister"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/btn_cta"
+                android:text="Register"
+                android:textColor="#FFFFFF"
+                android:drawablePadding="8dp"
+                android:drawableStart="@drawable/ic_register_18"/>
+        </LinearLayout>
+
+    </ScrollView>
+
