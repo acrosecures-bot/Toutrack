@@ -56,9 +56,20 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.widget.LinearLayout
 import com.google.android.material.card.MaterialCardView
+//
 
 
-class MainActivity : AppCompatActivity() {
+
+import android.net.Uri
+import androidx.appcompat.app.AlertDialog
+import com.google.android.material.button.MaterialButton
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+
+
+class MainActivity : AppCompatActivity( ) {
+    private var userListener: com.google.firebase.firestore.ListenerRegistration? = null
+
 
     private val TAG = "TouristMain"
 
@@ -86,7 +97,7 @@ class MainActivity : AppCompatActivity() {
     private var sosProgress = 0
     private var sosRunnable: Runnable? = null
     private var sosPressStartTime: Long = 0
-    private val SOS_HOLD_DURATION = 10000L // 2 seconds
+    private val SOS_HOLD_DURATION = 2000L // 2 seconds
     private val PROGRESS_INTERVAL = 20L   // update every 20 ms
     // ================= VIBRATION (INSERTED) =================
     private lateinit var vibrator: Vibrator
@@ -104,8 +115,38 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "SMS permission required for SOS", Toast.LENGTH_LONG).show()
             }
         }
+
+    private val locationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                checkBackgroundLocation()
+            }
+        }
+
     private var lat : Double = 0.0
     private var lng : Double = 0.0
+
+    /// user info
+    private var name: String? = null
+    private var email: String? = null
+    private var phone: String? = null
+
+    private var primaryName: String? = null
+    private var primaryPhone: String? = null
+    private var primaryRelation: String? = null
+
+    private var secondaryName: String? = null
+    private var secondaryPhone: String? = null
+    private var secondaryRelation: String? = null
+
+    private var bloodType: String? = null
+    private var allergies: String? = null
+    private var medicalConditions: String? = null
+    private var medications: String? = null
+
+    private lateinit var alertBtn: MaterialButton
+
+
 
 
 
@@ -235,7 +276,8 @@ class MainActivity : AppCompatActivity() {
             getLocation()
         }
         // sms
-        checkSmsPermission()
+      // checkAndRequestLocation()
+
 
 
         // --- UI and Firebase setup (keeps your existing app features) ---
@@ -261,22 +303,9 @@ class MainActivity : AppCompatActivity() {
 
 
 
-        // Load Firestore user data
-        db.collection("users").document(uid).get()
-            .addOnSuccessListener { doc ->
-                if (doc != null && doc.exists()) {
-                    fullName = doc.getString("fullName") ?: ""
-                    nationality = doc.getString("nationality") ?: ""
 
-                    val greeting = if (fullName.isNotEmpty()) " hello $fullName" else "Welcome"
-                    findViewById<TextView>(R.id.greeting_textview).text = greeting
-                } else {
-                    Toast.makeText(this, "User data not found!", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+        // Load Firestore user data
+
 
         // Logout
         btnLogOut.setOnClickListener {
@@ -298,7 +327,7 @@ class MainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.nav_home -> {
                     homeContainer.visibility = View.VISIBLE
-                    findViewById<TextView>(R.id.greeting_textview).text = "hello $fullName"
+                    findViewById<TextView>(R.id.greeting_textview).text = "Hello $fullName"
                     val btnShare = findViewById<LinearLayout>(R.id.btnShare)
 
                     btnShare.setOnClickListener {
@@ -310,6 +339,66 @@ class MainActivity : AppCompatActivity() {
                 }
                 R.id.nav_map -> {
                     mapContainer.visibility = View.VISIBLE
+                     alertBtn = findViewById(R.id.alert_btn)
+                    alertBtn.setOnClickListener {
+                        Toast.makeText(this, "🚨 Alert Button Clicked", Toast.LENGTH_SHORT).show()
+                        shareMessage()
+                    }
+                    val startBtn = findViewById<MaterialButton>(R.id.start_trace)
+
+                    val prefs = getSharedPreferences("tracking_pref", MODE_PRIVATE)
+
+                    var isTracking = prefs.getBoolean("tracking", false)
+
+                    updateTrackingUI(startBtn, isTracking)
+
+                    startBtn.setOnClickListener {
+
+                        if (!isTracking) {
+
+                            // ✅ CHECK LOCATION PERMISSION FIRST
+                            if (ContextCompat.checkSelfPermission(
+                                    this,
+                                    Manifest.permission.ACCESS_FINE_LOCATION
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+
+                                val intent = Intent(this, LocationService::class.java)
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    startForegroundService(intent)
+                                } else {
+                                    startService(intent)
+                                }
+
+                                isTracking = true
+                                prefs.edit().putBoolean("tracking", true).apply()
+
+                                Toast.makeText(this, "Tracking Started", Toast.LENGTH_SHORT).show()
+
+                            } else {
+                                Toast.makeText(this, "Location permission required", Toast.LENGTH_SHORT).show()
+                                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                                return@setOnClickListener
+                            }
+
+                        } else {
+
+                            // ✅ STOP TRACKING
+                            stopService(Intent(this, LocationService::class.java))
+
+                            isTracking = false
+                            prefs.edit().putBoolean("tracking", false).apply()
+
+                            Toast.makeText(this, "Tracking Stopped", Toast.LENGTH_SHORT).show()
+                        }
+
+                        updateTrackingUI(startBtn, isTracking)
+
+
+                     }
+
+
+
 
                 }
                 R.id.nav_id -> {
@@ -324,6 +413,21 @@ class MainActivity : AppCompatActivity() {
                     profileContainer.visibility = View.VISIBLE
                     val btnsetting=findViewById<ImageView>(R.id.settings_button)
                     findViewById<TextView>(R.id.p_username).text = fullName
+                    findViewById<TextView>(R.id.p_email).text = email
+                    findViewById<TextView>(R.id.p_phone).text = phone
+                    findViewById<TextView>(R.id.p_blood).text = bloodType
+                    findViewById<TextView>(R.id.p_allergies).text = allergies
+                    findViewById<TextView>(R.id.p_conditions).text = medicalConditions
+                    findViewById<TextView>(R.id.p_medications).text = medications
+                    findViewById<TextView>(R.id.p_primaryName).text = primaryName
+                    findViewById<TextView>(R.id.p_primaryPhone).text = primaryPhone
+                  //  findViewById<TextView>(R.id.p_primaryRelation).text = primaryRelation
+                    findViewById<TextView>(R.id.p_secondaryName).text = secondaryName
+                    findViewById<TextView>(R.id.p_secondaryPhone).text = secondaryPhone
+                    findViewById<TextView>(R.id.p_secondaryRelation).text = secondaryRelation
+
+
+
                     btnsetting.setOnClickListener { view ->
                         val intent = Intent(this, SettingsActivity::class.java)
                         startActivity(intent)
@@ -452,8 +556,75 @@ class MainActivity : AppCompatActivity() {
 
         hideSystemBars()
         // --- END: WebView JS bridge ---
+
+        // call background service
+     }
+
+    // Start bg tacking service btn behavior
+    private fun updateTrackingUI(button: MaterialButton, isTracking: Boolean) {
+
+        if (isTracking) {
+            // 🔴 Tracking ON
+            button.text = "Stop Tracking"
+            button.setBackgroundColor(Color.parseColor("#D32F2F")) // Red
+            button.setTextColor(Color.WHITE)
+        } else {
+            // 🟢 Tracking OFF
+            button.text = "Start Tracking"
+            button.setBackgroundColor(Color.parseColor("#388E3C")) // Green
+            button.setTextColor(Color.WHITE)
+        }
     }
-//---------------------------------------- Home share loc
+
+
+
+    // user doc
+
+    //For Back ground service
+
+    private fun startBackgroundLocation() {
+        val intent = Intent(this, LocationService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+
+    private fun checkAndRequestLocation() {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        } else {
+            checkBackgroundLocation()
+        }
+    }
+
+    private fun checkBackgroundLocation() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                // Android 10+ → send user to settings
+                val intent = Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:$packageName")
+                )
+                startActivity(intent)
+            } else {
+                startBackgroundLocation()
+            }
+        } else {
+            startBackgroundLocation()
+        }
+    }
+
+    //---------------------------------------- Home share loc
 private fun shareMessage() {
 
     // STEP 4.1: Your predefined data
@@ -502,7 +673,7 @@ private fun shareMessage() {
             title.setTextColor(Color.parseColor("#065F46"))
 
             location.setTextColor(Color.parseColor("#047857"))
-            location.text = "Titwala (Safe Area)"
+            location.text = "(Safe Area)"
 
         } else {
             // 🔴 DANGER
@@ -537,24 +708,66 @@ private fun shareMessage() {
     // sos
     // ================= TRIGGER SOS (INSERTED) =================
     private fun triggerSOS() {
+
+        val prefs = getSharedPreferences("sos_pref", MODE_PRIVATE)
+        val isConfirmed = prefs.getBoolean("sos_confirmed", false)
+
+        if (!isConfirmed) {
+
+            // Show confirmation only first time
+            AlertDialog.Builder(this)
+                .setTitle("Emergency Alert")
+                .setMessage("Allow app to send emergency SMS automatically in future?")
+                .setCancelable(false)
+                .setPositiveButton("YES") { _, _ ->
+
+                    // Save confirmation permanently
+                    prefs.edit().putBoolean("sos_confirmed", true).apply()
+
+                    checkAndSendSMS()
+                }
+                .setNegativeButton("CANCEL", null)
+                .show()
+
+        } else {
+            // Already confirmed once
+            checkAndSendSMS()
+        }
+    }
+    private fun checkAndSendSMS() {
+
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.SEND_SMS
             ) == PackageManager.PERMISSION_GRANTED
         ) {
+
             sendSOS_SMS()
+
         } else {
             smsPermissionLauncher.launch(Manifest.permission.SEND_SMS)
         }
     }
+
     // =========================================================
 
     // ================= SEND SMS OFFLINE (INSERTED) =================
     private fun sendSOS_SMS() {
-        val message = "My Location:\\nhttps://www.google.com/maps?q=$lat,$lng"
+
+        val contacts = getEmergencyContacts()
+
+        if (contacts.isEmpty()) {
+            Toast.makeText(this, "No emergency contacts saved", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val message = """
+        🚨 Emergency Alert 🚨
+        I need help. My location:
+        https://www.google.com/maps?q=$lat,$lng
+    """.trimIndent()
 
         val smsManager = SmsManager.getDefault()
-        val contacts = getEmergencyContacts()
 
         for (number in contacts) {
             try {
@@ -564,18 +777,27 @@ private fun shareMessage() {
             }
         }
 
-        Toast.makeText(this, "SOS sent to emergency contacts", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "SOS sent successfully", Toast.LENGTH_LONG).show()
     }
+
     // ===============================================================
 
     // ================= EMERGENCY CONTACTS (INSERTED) =================
+    //-------------Admin-------------
     private fun getEmergencyContacts(): List<String> {
-        return listOf(
-            "7498743700"
-           // "9321843437"
+        val contacts = mutableListOf<String>()
 
-        )
+        if (!primaryPhone.isNullOrBlank() && primaryPhone != "Nan") {
+            contacts.add(primaryPhone!!)
+        }
+
+        if (!secondaryPhone.isNullOrBlank() && secondaryPhone != "Nan") {
+            contacts.add(secondaryPhone!!)
+        }
+
+        return contacts
     }
+
     // For QR code generation:
 
     fun generateQRCode(text: String, size: Int = 800): Bitmap {
@@ -628,7 +850,7 @@ private fun shareMessage() {
                 if (location != null) {
                     Log.d(TAG, "getCurrentLocation -> success: ${location.latitude}, ${location.longitude}")
                     fetchWeather(location)
-                    findViewById<TextView>(R.id.location_text).text = " ${location.latitude}, ${location.longitude} "
+                    //findViewById<TextView>(R.id.location_text).text = " ${location.latitude}, ${location.longitude} "
 
                 } else {
                     Log.d(TAG, "getCurrentLocation -> null; falling back to updates")
@@ -816,4 +1038,74 @@ private fun shareMessage() {
             }
         }
     }
+
+    private fun attachUserListener(uid: String) {
+
+        userListener = db.collection("users")
+            .document(uid)
+            .addSnapshotListener { doc, error ->
+
+                if (error != null) {
+                    Log.e(TAG, "Snapshot error: ${error.message}")
+                    return@addSnapshotListener
+                }
+
+                if (doc != null && doc.exists()) {
+
+                    fullName = doc.getString("fullName") ?: ""
+                    nationality = doc.getString("nationality") ?: ""
+                    email = doc.getString("email") ?: ""
+                    phone = doc.getString("mobile") ?: ""
+
+                    primaryName = doc.getString("name1") ?: ""
+                    primaryPhone = doc.getString("phone1") ?: ""
+                    secondaryName = doc.getString("name2") ?: ""
+                    secondaryPhone = doc.getString("phone2") ?: ""
+
+                    bloodType = doc.getString("bloodType") ?: ""
+                    allergies = doc.getString("allergies") ?: ""
+                    medicalConditions = doc.getString("conditions") ?: ""
+                    medications = doc.getString("medications") ?: ""
+
+                    val greeting =
+                        if (fullName.isNotEmpty()) "Hello $fullName"
+                        else "Welcome"
+
+                    findViewById<TextView>(R.id.greeting_textview).text = greeting
+
+                    Log.d(TAG, "User data updated in real-time 🔥")
+                    updateProfileUI()
+
+                }
+            }
+    }
+    private fun updateProfileUI() {
+
+        findViewById<TextView>(R.id.p_username).text = fullName
+        findViewById<TextView>(R.id.p_email).text = email
+        findViewById<TextView>(R.id.p_phone).text = phone
+        findViewById<TextView>(R.id.p_blood).text = bloodType
+        findViewById<TextView>(R.id.p_allergies).text = allergies
+        findViewById<TextView>(R.id.p_conditions).text = medicalConditions
+        findViewById<TextView>(R.id.p_medications).text = medications
+        findViewById<TextView>(R.id.p_primaryName).text = primaryName
+        findViewById<TextView>(R.id.p_primaryPhone).text = primaryPhone
+        findViewById<TextView>(R.id.p_secondaryName).text = secondaryName
+        findViewById<TextView>(R.id.p_secondaryPhone).text = secondaryPhone
+        findViewById<TextView>(R.id.p_secondaryRelation).text = secondaryRelation
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        val currentUser = auth.currentUser ?: return
+        attachUserListener(currentUser.uid)
+    }
+
+
+    override fun onStop() {
+        super.onStop()
+        userListener?.remove()
+    }
+
 }

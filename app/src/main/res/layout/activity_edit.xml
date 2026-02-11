@@ -64,44 +64,55 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <TextView
+                        <ImageView
+                            android:id="@+id/iv_profile"
                             android:layout_width="60dp"
                             android:layout_height="60dp"
                             android:layout_marginEnd="15dp"
-                            android:background="@drawable/drawable_user_icon"
-                            android:gravity="center"
-                            android:text="User"
-                            android:textColor="@color/color_primary_purple"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
+                            android:src="@drawable/drawable_user_icon"
+                            android:scaleType="centerCrop"
+                            android:contentDescription="User icon" />
+
 
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:orientation="vertical">
 
-                            <TextView
+                            <EditText
+                                android:id="@+id/et_full_name"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Full name"
+                                android:hint="Full name"
                                 android:textColor="@color/color_text_dark"
                                 android:textSize="16sp"
-                                android:textStyle="bold" />
+                                android:textStyle="bold"
+                                android:background="@android:color/transparent"
+                                android:padding="0dp" />
 
-                            <TextView
+                            <EditText
+                                android:id="@+id/et_email"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="email@example.com"
+                                android:hint="Email address"
                                 android:textColor="@color/color_text_light_grey"
-                                android:textSize="14sp" />
+                                android:textSize="14sp"
+                                android:inputType="textEmailAddress"
+                                android:background="@android:color/transparent"
+                                android:padding="0dp" />
 
-                            <TextView
+                            <EditText
+                                android:id="@+id/et_phone"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="+91XXXXXXXXXX"
+                                android:hint="Phone number"
                                 android:textColor="@color/color_text_light_grey"
-                                android:textSize="14sp" />
+                                android:textSize="14sp"
+                                android:inputType="phone"
+                                android:background="@android:color/transparent"
+                                android:padding="0dp" />
                         </LinearLayout>
+
                     </LinearLayout>
 
                     <Button
@@ -160,6 +171,7 @@
                         android:layout_marginBottom="15dp">
 
                         <EditText
+                            android:id="@+id/et_primary_name"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -170,6 +182,7 @@
                             android:textSize="14sp" />
 
                         <EditText
+                            android:id="@+id/et_primary_phone"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -190,6 +203,7 @@
                         android:textColor="@color/color_text_light_grey" />
 
                     <Spinner
+                        android:id="@+id/sp_primary_relation"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:entries="@array/relation_options"
@@ -210,6 +224,7 @@
                         android:layout_marginBottom="15dp">
 
                         <EditText
+                            android:id="@+id/et_secondary_name"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -220,6 +235,7 @@
                             android:textSize="14sp" />
 
                         <EditText
+                            android:id="@+id/et_secondary_phone"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -240,6 +256,7 @@
                         android:textColor="@color/color_text_light_grey" />
 
                     <Spinner
+                        android:id="@+id/sp_secondary_relation"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:entries="@array/relation_options"
@@ -285,6 +302,7 @@
                         android:textColor="@color/color_text_light_grey" />
 
                     <Spinner
+                        android:id="@+id/sp_location_sharing"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:entries="@array/location_sharing_options"
@@ -310,6 +328,7 @@
                             android:textSize="14sp" />
 
                         <Switch
+                            android:id="@+id/sw_realtime_tracking"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:checked="false" />
@@ -323,6 +342,7 @@
                         android:textColor="@color/color_text_light_grey" />
 
                     <Spinner
+                        android:id="@+id/sp_precision"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:entries="@array/precision_options"
@@ -332,6 +352,115 @@
                         android:spinnerMode="dropdown" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+            <!-- Medical Details -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Medical Details"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:textColor="@color/color_text_dark"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="15dp"
+                android:paddingBottom="5dp"
+                android:background="@drawable/selector_section_header" />
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                android:layout_marginBottom="20dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/drawable_card_bg"
+                    android:padding="20dp"
+                    android:orientation="vertical">
+
+                    <!-- Blood Type -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Blood Type"
+                        android:textSize="14sp"
+                        android:textColor="@color/color_text_light_grey" />
+
+                    <EditText
+                        android:id="@+id/et_blood_type"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="e.g. O+"
+                        android:background="@drawable/drawable_input_bg"
+                        android:padding="10dp"
+                        android:textSize="14sp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="12dp" />
+
+                    <!-- Allergies -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Allergies"
+                        android:textSize="14sp"
+                        android:textColor="@color/color_text_light_grey" />
+
+                    <EditText
+                        android:id="@+id/et_allergies"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="e.g. Penicillin, Peanuts"
+                        android:background="@drawable/drawable_input_bg"
+                        android:padding="10dp"
+                        android:textSize="14sp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="12dp" />
+
+                    <!-- Medical Conditions -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Medical Conditions"
+                        android:textSize="14sp"
+                        android:textColor="@color/color_text_light_grey" />
+
+                    <EditText
+                        android:id="@+id/et_medical_conditions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="e.g. Type 1 Diabetes"
+                        android:background="@drawable/drawable_input_bg"
+                        android:padding="10dp"
+                        android:textSize="14sp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="12dp" />
+
+                    <!-- Medications -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Medications"
+                        android:textSize="14sp"
+                        android:textColor="@color/color_text_light_grey" />
+
+                    <EditText
+                        android:id="@+id/et_medications"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="e.g. Insulin"
+                        android:background="@drawable/drawable_input_bg"
+                        android:padding="10dp"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
 
             <!-- Privacy & Language -->
             <TextView
@@ -376,6 +505,7 @@
                             android:textSize="14sp" />
 
                         <Switch
+                            android:id="@+id/sw_consent_location"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:checked="true" />
@@ -397,27 +527,14 @@
                             android:textSize="14sp" />
 
                         <Switch
+                            android:id="@+id/sw_consent_kyc"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:checked="true" />
                     </LinearLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Data retention"
-                        android:textSize="14sp"
-                        android:textColor="@color/color_text_light_grey" />
 
-                    <Spinner
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:entries="@array/data_retention_options"
-                        android:background="@drawable/drawable_input_bg"
-                        android:layout_marginTop="5dp"
-                        android:layout_marginBottom="15dp"
-                        android:padding="10dp"
-                        android:spinnerMode="dropdown" />
+
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -427,6 +544,7 @@
                         android:textColor="@color/color_text_light_grey" />
 
                     <Spinner
+                        android:id="@+id/sp_language"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:entries="@array/language_options"

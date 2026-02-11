@@ -205,20 +205,26 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun showSignIn() {
-        signinCard.visibility = View.VISIBLE
-        registerCard.visibility = View.GONE
-        underlineSignIn.setBackgroundResource(R.drawable.grad_tab_active)
-        underlineRegister.setBackgroundColor(resources.getColor(android.R.color.transparent, theme))
-        btnSignInTab.setTextColor(resources.getColor(R.color.purple_700, theme))
-        btnRegisterTab.setTextColor(resources.getColor(R.color.gray_500, theme))
+
+            signinCard.visibility = View.VISIBLE
+            registerCard.visibility = View.GONE
+
+            underlineSignIn.visibility = View.VISIBLE
+            underlineRegister.visibility = View.INVISIBLE
+
+            btnSignInTab.setTextColor(getColor(R.color.purple_700))
+            btnRegisterTab.setTextColor(getColor(R.color.gray_500))
+
     }
 
     private fun showRegister() {
         signinCard.visibility = View.GONE
         registerCard.visibility = View.VISIBLE
-        underlineRegister.setBackgroundResource(R.drawable.grad_tab_active)
-        underlineSignIn.setBackgroundColor(resources.getColor(android.R.color.transparent, theme))
-        btnRegisterTab.setTextColor(resources.getColor(R.color.purple_700, theme))
-        btnSignInTab.setTextColor(resources.getColor(R.color.gray_500, theme))
+
+        underlineRegister.visibility = View.VISIBLE
+        underlineSignIn.visibility = View.INVISIBLE
+
+        btnRegisterTab.setTextColor(getColor(R.color.purple_700))
+        btnSignInTab.setTextColor(getColor(R.color.gray_500))
     }
 }

@@ -5,6 +5,7 @@
     The main content is a FrameLayout which contains all four pages.
     Only one page is visible at a time, controlled by the MainActivity.
 -->
+
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -24,7 +25,7 @@
             android:id="@+id/home_page_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="visible"
+            android:visibility="gone"
             android:scrollbars="none">
             <LinearLayout
                 android:layout_width="match_parent"
@@ -97,7 +98,8 @@
                                 android:id="@+id/location_text"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textSize="12sp" />
+                                android:textSize="12sp"
+                                android:text="you are in safe zone"/>
                         </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -221,7 +223,7 @@
             android:layout_height="match_parent"
             android:background="#F9FAFB"
             android:scrollbars="none"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -345,9 +347,17 @@
                 <com.google.android.material.card.MaterialCardView ... >
                 ...
                 </com.google.android.material.card.MaterialCardView>
-                -->
+              -->
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/start_trace"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="24dp"
+                     android:text="Start tracking"
+                    app:cornerRadius="12dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/alert_btn"
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
                     android:layout_marginTop="24dp"
@@ -724,11 +734,13 @@
                                 android:textStyle="bold"
                                 android:textSize="18sp" />
                             <TextView
+                                android:id="@+id/p_email"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="johndoe@example.com"
                                 android:textColor="@android:color/darker_gray" />
                             <TextView
+                                android:id="@+id/p_phone"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="+1 (555) 123-4567"
@@ -768,10 +780,19 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_toEndOf="@id/contact_icon1">
+
                                 <TextView
+                                    android:id="@+id/p_primaryName"
                                     style="@style/ContactName"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
                                     android:text="Jane Doe" />
                                 <TextView
+                                    android:id="@+id/p_primaryPhone"
+                                    style="@style/ContactRelation"
+                                    android:text="Sister" />
+                                <TextView
+                                    android:id="@+id/p_primary"
                                     style="@style/ContactRelation"
                                     android:text="Sister" />
                             </LinearLayout>
@@ -798,9 +819,16 @@
                                 android:layout_height="wrap_content"
                                 android:layout_toEndOf="@id/contact_icon2">
                                 <TextView
+                                    android:id="@+id/p_secondaryName"
                                     style="@style/ContactName"
-                                    android:text="Richard Roe" />
+                                    android:text="empty" />
                                 <TextView
+                                    android:id="@+id/p_secondaryPhone"
+                                    style="@style/ContactRelation">
+
+                                </TextView>
+                                <TextView
+                                    android:id="@+id/p_secondaryRelation"
                                     style="@style/ContactRelation"
                                     android:text="Friend" />
                             </LinearLayout>
@@ -827,9 +855,11 @@
                         android:orientation="vertical"
                         android:padding="16dp">
                         <TextView
+                            android:id="@+id/p_bloodType"
                             style="@style/MedicalLabel"
                             android:text="Blood Type" />
                         <TextView
+                            android:id="@+id/p_blood"
                             style="@style/MedicalValue"
                             android:text="O+" />
                         <View style="@style/Divider" />
@@ -837,6 +867,7 @@
                             style="@style/MedicalLabel"
                             android:text="Allergies" />
                         <TextView
+                            android:id="@+id/p_allergies"
                             style="@style/MedicalValue"
                             android:text="Penicillin, Peanuts" />
                         <View style="@style/Divider" />
@@ -844,6 +875,7 @@
                             style="@style/MedicalLabel"
                             android:text="Medical Conditions" />
                         <TextView
+                            android:id="@+id/p_conditions"
                             style="@style/MedicalValue"
                             android:text="Type 1 Diabetes" />
                         <View style="@style/Divider" />
@@ -851,6 +883,7 @@
                             style="@style/MedicalLabel"
                             android:text="Medications" />
                         <TextView
+                            android:id="@+id/p_medications"
                             style="@style/MedicalValue"
                             android:text="Insulin" />
                     </LinearLayout>
@@ -869,12 +902,13 @@
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/black"
                     app:cornerRadius="8dp"
-                     android:text="log out"
+                    android:text="log out"
                     />
 
             </LinearLayout>
 
         </ScrollView>
+
     </FrameLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView

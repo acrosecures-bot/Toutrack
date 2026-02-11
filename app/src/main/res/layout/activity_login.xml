@@ -120,7 +120,7 @@
             android:background="@drawable/card_bg"
             android:padding="18dp"
             android:layout_marginTop="12dp"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -272,10 +272,6 @@
                 </LinearLayout>
 
             </LinearLayout>
-
-        </LinearLayout>
-
-
             <!-- Basic fields -->
             <EditText
                 android:id="@+id/r_fullName"
@@ -445,6 +441,11 @@
                 android:drawablePadding="8dp"
                 android:drawableStart="@drawable/ic_register_18"/>
         </LinearLayout>
+
+        </LinearLayout>
+
+
+
 
     </ScrollView>
 
