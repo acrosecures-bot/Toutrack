@@ -219,7 +219,7 @@
         <!-- ======================= MAP PAGE ======================= -->
         <ScrollView
             android:id="@+id/map_page_container"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="#F9FAFB"
             android:scrollbars="none"
@@ -284,39 +284,17 @@
                         android:orientation="vertical"
                         android:padding="16dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Current Location"
-                            android:textColor="@android:color/black"
-                            android:textStyle="bold" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:fontFamily="monospace"
-                            android:text="Titwala, Maharashtra"
-                            android:textColor="@android:color/black"
-                            android:textSize="18sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="Safe radius: 500 m"
-                            android:textColor="@android:color/darker_gray"
-                            android:textSize="12sp" />
 
                         <FrameLayout
                             android:layout_width="match_parent"
                             android:layout_height="400dp"
                             android:layout_marginTop="8dp">
 
-                            <WebView
-                                android:id="@+id/web"
+                            <org.maplibre.android.maps.MapView
+                                android:id="@+id/mapView"
                                 android:layout_width="match_parent"
-                                android:layout_height="400dp" />
+                                android:layout_height="match_parent" />
 
                             <!-- map design placeholders
                             <View

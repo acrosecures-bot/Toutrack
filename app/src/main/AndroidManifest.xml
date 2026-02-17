@@ -11,8 +11,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.SEND_SMS"/>
-
-    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>    <uses-permission android:name="android.permission.VIBRATE" />
 
     <uses-feature
         android:name="android.hardware.telephony"
@@ -53,7 +52,16 @@
             android:name=".LocationService"
             android:foregroundServiceType="location"
             android:exported="false" />
+        <meta-data
+            android:name="org.maplibre.android.maps.token"
+            android:value="dummy" />
+        <receiver
+            android:name=".GeofenceReceiver"
+            android:exported="true"
+            android:permission="TODO" />
+
 
     </application>
+
 
 </manifest>

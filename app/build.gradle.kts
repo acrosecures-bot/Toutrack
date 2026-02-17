@@ -87,6 +87,13 @@ dependencies {
 
     // Qr code
     implementation("com.google.zxing:core:3.5.2")
+    //
+    implementation("org.maplibre.gl:android-plugin-annotation-v9:3.0.0")
+    implementation("org.maplibre.gl:android-sdk:11.8.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+
+    //grofence
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 
 
 }

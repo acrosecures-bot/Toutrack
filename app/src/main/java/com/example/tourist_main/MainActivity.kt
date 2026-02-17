@@ -2,34 +2,27 @@ package com.example.tourist_main
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.BroadcastReceiver
 import android.content.pm.PackageManager
-import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.location.Geocoder
 import android.location.Location
-import android.os.Build
-import android.os.Bundle
-import android.os.Looper
+import android.net.Uri
+import android.os.*
 import android.provider.Settings
 import android.telephony.SmsManager
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.webkit.ConsoleMessage
-import android.webkit.GeolocationPermissions
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.ScrollView
-import android.widget.TextView
-import android.widget.Toast
+import android.webkit.*
+import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -39,35 +32,45 @@ import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.google.android.gms.location.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.chip.Chip
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
-import com.google.zxing.qrcode.encoder.QRCode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
-import com.google.android.material.chip.Chip
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
-import android.widget.LinearLayout
-import com.google.android.material.card.MaterialCardView
-//
+
+// MapLibre
+import org.maplibre.android.MapLibre
+import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.PropertyFactory.lineColor
+import org.maplibre.android.style.layers.PropertyFactory.lineWidth
+import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.geojson.Feature
+import org.maplibre.geojson.Point
+import org.maplibre.geojson.Polygon
+
+ import org.maplibre.android.WellKnownTileServer
 
 
-
-import android.net.Uri
-import androidx.appcompat.app.AlertDialog
-import com.google.android.material.button.MaterialButton
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
 
 
 class MainActivity : AppCompatActivity( ) {
+    private lateinit var geofencePendingIntent: PendingIntent
+    private lateinit var geofencingClient: GeofencingClient
+    private lateinit var mapView: MapView
     private var userListener: com.google.firebase.firestore.ListenerRegistration? = null
 
 
@@ -146,6 +149,11 @@ class MainActivity : AppCompatActivity( ) {
 
     private lateinit var alertBtn: MaterialButton
 
+    private var geofenceLat = 0.0
+    private var geofenceLng = 0.0
+    private val geofenceRadius = 200.0
+
+
 
 
 
@@ -153,7 +161,18 @@ class MainActivity : AppCompatActivity( ) {
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MapLibre.getInstance(
+            this,
+            null,
+            WellKnownTileServer.MapLibre
+        )
         setContentView(R.layout.activity_main)
+        mapView = findViewById(R.id.mapView)
+
+        MapLibre.getInstance(this)
+        mapView.onCreate(savedInstanceState)
+
+
 
         val sosButton = findViewById<Button>(R.id.sos_button)
         val sosProgressBar = findViewById<ProgressBar>(R.id.sos_progress)
@@ -305,6 +324,91 @@ class MainActivity : AppCompatActivity( ) {
 
 
         // Load Firestore user data
+        // geof
+       // mapView = findViewById(R.id.mapView)
+        geofencingClient = LocationServices.getGeofencingClient(this)
+        val intent = Intent(this, GeofenceReceiver::class.java)
+        geofencePendingIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        mapView.getMapAsync { map ->
+
+            map.setStyle(
+                "https://api.maptiler.com/maps/streets/style.json?key=gFiXSFetCzyCEfHBHKvq"
+            ) { style ->
+
+                val fusedLocationClient =
+                    LocationServices.getFusedLocationProviderClient(this)
+
+                if (ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+
+                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+
+                        location?.let {
+
+                            val userLatLng = LatLng(it.latitude, it.longitude)
+
+                            // Move camera
+                            map.cameraPosition = CameraPosition.Builder()
+                                .target(userLatLng)
+                                .zoom(15.0)
+                                .build()
+
+                            // Add marker
+                            map.addMarker(
+                                MarkerOptions()
+                                    .position(userLatLng)
+                                    .title("You are here")
+                            )
+                            lat = it.latitude
+                            lng = it.longitude
+                            geofenceLat = it.latitude
+                            geofenceLng = it.longitude
+
+
+
+
+                            // Draw circle border (radar)
+                            val polygon = createCircle(it.latitude, it.longitude, 200.0)
+
+                            val source = GeoJsonSource(
+                                "geofence-source",
+                                Feature.fromGeometry(polygon)
+                            )
+                            style.addSource(source)
+
+                            val lineLayer = LineLayer("geofence-layer", "geofence-source")
+                            lineLayer.setProperties(
+                                lineColor("#2196F3"),
+                                lineWidth(4f)
+                            )
+
+                            style.addLayer(lineLayer)
+                            checkGeofenceStatus(it.latitude, it.longitude)
+
+                        }
+                    }
+                } else {
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                        1
+                    )
+                }
+            }
+        }
+
+
+
+
 
 
         // Logout
@@ -443,122 +547,50 @@ class MainActivity : AppCompatActivity( ) {
         // This will allow JS to call:
         //   window.TouristAppInterface.setGeofenceStatus("Geofence Entered")
         //   window.TouristAppInterface.getGeofenceStatus()
-        try {
-            // load your live website (replace with your real URL)
-            val webView = findViewById<WebView?>(R.id.web)
-            val yourUrl = "https://xm5a.github.io/JS-Interface-Test/"
-            webView.loadUrl("https://xm5a.github.io/JS-Interface-Test/")
 
-            if (webView != null) {
-                // --- WebView settings ---
-                val settings: WebSettings = webView.settings
-                settings.javaScriptEnabled = true
-                settings.domStorageEnabled = true
-                settings.setGeolocationEnabled(true)
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-                }
-
-                // WebChromeClient: forward console messages and grant geolocation prompt
-                webView.webChromeClient = object : WebChromeClient() {
-                    override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                        Log.d(TAG, "WebViewConsole: ${consoleMessage?.message()} -- ${consoleMessage?.sourceId()}:${consoleMessage?.lineNumber()}")
-                        return super.onConsoleMessage(consoleMessage)
-                    }
-
-                    override fun onGeolocationPermissionsShowPrompt(origin: String?, callback: GeolocationPermissions.Callback?) {
-                        // Auto-allow geolocation (change if you need a user prompt)
-                        callback?.invoke(origin, true, false)
-                    }
-                }
-
-                // Attach the JS interface under the exact name used by your HTML.
-                // TouristAppInterface must accept a callback: TouristAppInterface(activity) { status -> ... }
-                // --- Attach JSBridge as "Android" so page's Android.handleAction(...) will be handled ---
-                // create a single instance (class property is better: private lateinit var bridge: jsbridge)
-                val bridge = TouristAppInterface(
-                    this, onAction = { action, payload ->
-                        // Called when web calls Android.handleAction(...)
-                        Log.d(TAG, "JSBridge action received -> action=$action payload=$payload")
-
-                        when (action) {
-                            "locationUpdate" -> {
-                                payload?.let {
-                                    lat = it.optDouble("lat", Double.NaN)
-                                    lng = it.optDouble("lng", Double.NaN)
-                                    val acc = it.optDouble("accuracy", Double.NaN)
-                                    val ts = it.optString("timestamp", "")
-                                    val s=it.optString("Hi","error")
-                                    val city=it.optString("City","error")
-                                    val isSafeZone = true   // change this based on geo-fence / API / logic
-
-                                    Log.d(TAG, "LocationUpdate from web: lat=$lat lng=$lng acc=$acc ts=$ts s=$s")
-
-                                    geofenceStatusFromWeb = "$s"
-                                    val temp ="$s"
-                                    runOnUiThread {
-                                        if(geofenceStatusFromWeb==temp) {
-                                          /*  zone.text = geofenceStatusFromWeb
-                                            zone.setTextColor(Color.WHITE)
-                                            zone.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("red")))*/
-                                            zone.text = city
-                                            zone.setTextColor(Color.WHITE)
-                                            zone.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("green")))
-                                            updateSafetyUI(isSafeZone)
-
-
-                                        }
-                                        else {
-                                            zone.text = "Inside"
-                                            zone.setTextColor(Color.WHITE)
-                                            zone.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("green")))
-                                        }
-                                    }
-                                }
-                            }
-
-                            "startTracking" -> {
-                                Log.d(TAG, "Start tracking requested by web")
-                                // start native tracking here
-                            }
-
-                            "stopTracking" -> {
-                                Log.d(TAG, "Stop tracking requested by web")
-                                // stop native tracking here
-                            }
-
-                            else -> {
-                                Log.w(TAG, "Unhandled action from web: $action")
-                            }
-                        }
-                    }
-                )
-
-// Attach the same instance ONCE under both names the page might use:
-               // webView.addJavascriptInterface(bridge, "Android")
-               webView.addJavascriptInterface(bridge, "TouristAppInterface")
-
-
-
-                // call on UI thread (safe)
-
-
-                // Load the URL after settings and interface are attached
-
-                Log.d(TAG, "TouristAppInterface attached to WebView (id=web)")
-            } else {
-                Log.w(TAG, "No WebView with id 'web' found. TouristAppInterface NOT attached.")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to attach TouristAppInterface: ${e.message}", e)
-        }
 
         hideSystemBars()
         // --- END: WebView JS bridge ---
 
         // call background service
      }
+
+
+    //Map
+    private fun createCircle(lat: Double, lng: Double, radiusMeters: Double): Polygon {
+        val points = ArrayList<Point>()
+        val steps = 60
+
+        for (i in 0..steps) {
+            val angle = Math.toRadians((i * 360 / steps).toDouble())
+            val dx = radiusMeters * Math.cos(angle)
+            val dy = radiusMeters * Math.sin(angle)
+
+            val earthRadius = 6378137.0
+            val newLat = lat + (dy / earthRadius) * (180 / Math.PI)
+            val newLng = lng + (dx / earthRadius) * (180 / Math.PI) /
+                    Math.cos(Math.toRadians(lat))
+
+            points.add(Point.fromLngLat(newLng, newLat))
+        }
+
+        return Polygon.fromLngLats(listOf(points))
+    }
+    private fun checkGeofenceStatus(currentLat: Double, currentLng: Double) {
+
+        val results = FloatArray(1)
+
+        Location.distanceBetween(
+            currentLat,
+            currentLng,
+            geofenceLat,
+            geofenceLng,
+            results
+        )
+
+        updateSafetyUI(results[0] <= geofenceRadius)
+    }
+
 
     // Start bg tacking service btn behavior
     private fun updateTrackingUI(button: MaterialButton, isTracking: Boolean) {
@@ -655,40 +687,51 @@ private fun shareMessage() {
 
 
  //  ---------------------------- //SOS----------------------------------------
-    private fun updateSafetyUI(isSafe: Boolean) {
+ private fun updateSafetyUI(isSafe: Boolean) {
 
-        val card = findViewById<MaterialCardView>(R.id.safetyCard)
-        val icon = findViewById<ImageView>(R.id.safetyIcon)
-        val title = findViewById<TextView>(R.id.safetyTitle)
-        val location = findViewById<TextView>(R.id.location_text)
+     val card = findViewById<MaterialCardView>(R.id.safetyCard)
+     val icon = findViewById<ImageView>(R.id.safetyIcon)
+     val title = findViewById<TextView>(R.id.safetyTitle)
+     val location = findViewById<TextView>(R.id.location_text)
+     val zone = findViewById<Chip>(R.id.zone)
 
-        if (isSafe) {
-            // 🟢 SAFE
-            card.setCardBackgroundColor(Color.parseColor("#F0FFF4"))
-            card.strokeColor = Color.parseColor("#A7F3D0")
+     if (isSafe) {
+         // SAFE
+         card.setCardBackgroundColor(Color.parseColor("#F0FFF4"))
+         card.strokeColor = Color.parseColor("#A7F3D0")
 
-            icon.setColorFilter(Color.parseColor("#10B981"))
+         icon.setColorFilter(Color.parseColor("#10B981"))
 
-            title.text = "You are in a Safe Zone"
-            title.setTextColor(Color.parseColor("#065F46"))
+         title.text = "You are in a Safe Zone"
+         title.setTextColor(Color.parseColor("#065F46"))
 
-            location.setTextColor(Color.parseColor("#047857"))
-            location.text = "(Safe Area)"
+         location.setTextColor(Color.parseColor("#047857"))
+         location.text = "(Safe Area)"
 
-        } else {
-            // 🔴 DANGER
-            card.setCardBackgroundColor(Color.parseColor("#FEF2F2"))
-            card.strokeColor = Color.parseColor("#FCA5A5")
+         // CHIP UPDATE
+         zone.text = "SAFE"
+         zone.setChipBackgroundColorResource(R.color.sos_safe)
 
-            icon.setColorFilter(Color.parseColor("#DC2626"))
+     } else {
+         // DANGER
+         card.setCardBackgroundColor(Color.parseColor("#FEF2F2"))
+         card.strokeColor = Color.parseColor("#FCA5A5")
 
-            title.text = "You are in a Danger Zone"
-            title.setTextColor(Color.parseColor("#7F1D1D"))
+         icon.setColorFilter(Color.parseColor("#DC2626"))
 
-            location.setTextColor(Color.parseColor("#B91C1C"))
-            location.text = "Unsafe Location"
-        }
-    }
+         title.text = "You are in a Danger Zone"
+         title.setTextColor(Color.parseColor("#7F1D1D"))
+
+         location.setTextColor(Color.parseColor("#B91C1C"))
+         location.text = "Unsafe Location"
+
+         // CHIP UPDATE
+         zone.text = "DANGER"
+         zone.setChipBackgroundColorResource(R.color.sos_danger)
+     }
+ }
+
+
 
     // for sms
     private fun checkSmsPermission() {
@@ -753,21 +796,10 @@ private fun shareMessage() {
 
     // ================= SEND SMS OFFLINE (INSERTED) =================
     private fun sendSOS_SMS() {
-
-        val contacts = getEmergencyContacts()
-
-        if (contacts.isEmpty()) {
-            Toast.makeText(this, "No emergency contacts saved", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        val message = """
-        🚨 Emergency Alert 🚨
-        I need help. My location:
-        https://www.google.com/maps?q=$lat,$lng
-    """.trimIndent()
+        val message = "My Location:\\nhttps://www.google.com/maps?q=$lat,$lng"
 
         val smsManager = SmsManager.getDefault()
+        val contacts = getEmergencyContacts()
 
         for (number in contacts) {
             try {
@@ -777,13 +809,11 @@ private fun shareMessage() {
             }
         }
 
-        Toast.makeText(this, "SOS sent successfully", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "SOS sent to emergency contacts", Toast.LENGTH_LONG).show()
     }
-
     // ===============================================================
 
     // ================= EMERGENCY CONTACTS (INSERTED) =================
-    //-------------Admin-------------
     private fun getEmergencyContacts(): List<String> {
         val contacts = mutableListOf<String>()
 
@@ -796,6 +826,7 @@ private fun shareMessage() {
         }
 
         return contacts
+
     }
 
     // For QR code generation:
@@ -933,7 +964,7 @@ private fun shareMessage() {
     // --- WEATHER: fetch and update your layout IDs (imgWeather, txtLocation, txtTemp) ---
     private fun fetchWeather(location: Location) {
         val lat = location.latitude
-        val lon = location.longitude
+        val lng = location.longitude
 
         val apiKey = OPENWEATHER_API_KEY
         if (apiKey.isBlank() || apiKey == "YOUR_OPENWEATHER_API_KEY") {
@@ -946,7 +977,7 @@ private fun shareMessage() {
             try {
                 // 1) get weather
                 val response = withContext(Dispatchers.IO) {
-                    RetrofitInstance.api.getWeather(lat, lon, apiKey)
+                    RetrofitInstance.api.getWeather(lat, lng, apiKey)
                 }
                 val weather = response.weather.firstOrNull()
                 val description = weather?.description?.replaceFirstChar {
@@ -965,12 +996,12 @@ private fun shareMessage() {
                 val iconUrl = weather?.icon?.let { "https://openweathermap.org/img/wn/${it}@2x.png" }
                 if (!iconUrl.isNullOrEmpty()) imgView.load(iconUrl)
 
-                Log.d(TAG, "Weather updated immediately: ${response.main.temp}°C, $description for $lat,$lon")
+                Log.d(TAG, "Weather updated immediately: ${response.main.temp}°C, $description for $lat,$lng")
 
                 // 3) Fire reverse-geocoding in background (non-blocking). If it returns a nicer name, update the UI.
                 lifecycleScope.launch(Dispatchers.IO) {
                     val geoName = try {
-                        reverseGeocodeName(lat, lon) // your suspend helper; it uses Dispatchers.IO internally
+                        reverseGeocodeName(lat, lng) // your suspend helper; it uses Dispatchers.IO internally
                     } catch (e: Exception) {
                         Log.w(TAG, "reverseGeocodeName error: ${e.message}")
                         null
@@ -995,10 +1026,7 @@ private fun shareMessage() {
     }
 
 
-    override fun onDestroy() {
-        super.onDestroy()
-        stopLocationUpdates()
-    }
+
     private val geocodeCache = mutableMapOf<String, String>()
 
     private suspend fun reverseGeocodeName(lat: Double, lon: Double): String? {
@@ -1097,6 +1125,7 @@ private fun shareMessage() {
 
     override fun onStart() {
         super.onStart()
+        mapView.onStart()
 
         val currentUser = auth.currentUser ?: return
         attachUserListener(currentUser.uid)
@@ -1105,7 +1134,27 @@ private fun shareMessage() {
 
     override fun onStop() {
         super.onStop()
+        mapView.onStop()
         userListener?.remove()
+    }
+    override fun onResume() {
+        super.onResume()
+        mapView.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mapView.onPause()
+    }
+    override fun onLowMemory() {
+        super.onLowMemory()
+        mapView.onLowMemory()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mapView.onDestroy()
+        stopLocationUpdates()
     }
 
 }
