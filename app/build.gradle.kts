@@ -95,5 +95,14 @@ dependencies {
     //grofence
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
+   // implementation("io.radar:sdk-android:3.+")
+
+    // img
+    implementation("io.github.jan-tennert.supabase:supabase-kt:2.0.0")
+    implementation("io.github.jan-tennert.supabase:storage-kt:2.0.0")
+    implementation("io.ktor:ktor-client-okhttp:2.3.4")
+
+
+
 
 }

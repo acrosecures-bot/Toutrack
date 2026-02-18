@@ -63,7 +63,7 @@ import org.maplibre.geojson.Point
 import org.maplibre.geojson.Polygon
 
  import org.maplibre.android.WellKnownTileServer
-
+import coil.transform.CircleCropTransformation
 
 
 
@@ -152,6 +152,9 @@ class MainActivity : AppCompatActivity( ) {
     private var geofenceLat = 0.0
     private var geofenceLng = 0.0
     private val geofenceRadius = 200.0
+
+    private var profileImageUrl: String? = null
+
 
 
 
@@ -508,7 +511,7 @@ class MainActivity : AppCompatActivity( ) {
                 R.id.nav_id -> {
                     idContainer.visibility = View.VISIBLE
                     findViewById<TextView>(R.id.idName).text = fullName
-                    findViewById<TextView>(R.id.r_nationality).text = "Nationality: $nationality"
+                  //  findViewById<TextView>(R.id.r_nationality).text = "Nationality: $nationality"
                     val qr = generateQRCode("Ganesh")
                     QRCode.setImageBitmap(qr)
 
@@ -1081,9 +1084,11 @@ private fun shareMessage() {
                 if (doc != null && doc.exists()) {
 
                     fullName = doc.getString("fullName") ?: ""
-                    nationality = doc.getString("nationality") ?: ""
                     email = doc.getString("email") ?: ""
                     phone = doc.getString("mobile") ?: ""
+
+                    profileImageUrl = doc.getString("profileImage")
+
 
                     primaryName = doc.getString("name1") ?: ""
                     primaryPhone = doc.getString("phone1") ?: ""
@@ -1121,6 +1126,23 @@ private fun shareMessage() {
         findViewById<TextView>(R.id.p_secondaryName).text = secondaryName
         findViewById<TextView>(R.id.p_secondaryPhone).text = secondaryPhone
         findViewById<TextView>(R.id.p_secondaryRelation).text = secondaryRelation
+
+        val profileImageView = findViewById<ImageView>(R.id.profile_image)
+        val profileImage = findViewById<ImageView>(R.id.p_profile_image)
+
+
+        if (!profileImageUrl.isNullOrEmpty()) {
+            profileImageView.load(profileImageUrl) {
+                crossfade(true)
+                transformations(CircleCropTransformation())
+            }
+            profileImage.load(profileImageUrl) {
+                crossfade(true)
+                transformations(CircleCropTransformation())
+            }
+        }
+
+
     }
 
     override fun onStart() {
