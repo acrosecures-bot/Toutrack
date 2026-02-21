@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -64,10 +65,25 @@ import org.maplibre.geojson.Polygon
 
  import org.maplibre.android.WellKnownTileServer
 import coil.transform.CircleCropTransformation
+import com.google.firebase.firestore.FirebaseFirestore
+import io.radar.sdk.Radar
+import io.radar.sdk.RadarTrackingOptions
+import org.maplibre.android.maps.Style
+import java.util.Locale.filter
 
 
 
 class MainActivity : AppCompatActivity( ) {
+
+    var externalId: String? = null
+    private val geofenceReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val isSafe = intent?.getBooleanExtra("isSafe", true) ?: true
+            updateSafetyUI(isSafe)
+        }
+    }
+
+
     private lateinit var geofencePendingIntent: PendingIntent
     private lateinit var geofencingClient: GeofencingClient
     private lateinit var mapView: MapView
@@ -379,23 +395,11 @@ class MainActivity : AppCompatActivity( ) {
 
 
 
-                            // Draw circle border (radar)
-                            val polygon = createCircle(it.latitude, it.longitude, 200.0)
+                            // Draw  border (radar)
+                            loadAssignedGeofence(style)
 
-                            val source = GeoJsonSource(
-                                "geofence-source",
-                                Feature.fromGeometry(polygon)
-                            )
-                            style.addSource(source)
-
-                            val lineLayer = LineLayer("geofence-layer", "geofence-source")
-                            lineLayer.setProperties(
-                                lineColor("#2196F3"),
-                                lineWidth(4f)
-                            )
-
-                            style.addLayer(lineLayer)
-                            checkGeofenceStatus(it.latitude, it.longitude)
+                          //  checkGeofenceStatus(it.latitude, it.longitude)
+                          //  Radar.startTracking(RadarTrackingOptions.CONTINUOUS)
 
                         }
                     }
@@ -458,12 +462,10 @@ class MainActivity : AppCompatActivity( ) {
                     var isTracking = prefs.getBoolean("tracking", false)
 
                     updateTrackingUI(startBtn, isTracking)
-
                     startBtn.setOnClickListener {
 
                         if (!isTracking) {
 
-                            // ✅ CHECK LOCATION PERMISSION FIRST
                             if (ContextCompat.checkSelfPermission(
                                     this,
                                     Manifest.permission.ACCESS_FINE_LOCATION
@@ -471,11 +473,7 @@ class MainActivity : AppCompatActivity( ) {
                             ) {
 
                                 val intent = Intent(this, LocationService::class.java)
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                    startForegroundService(intent)
-                                } else {
-                                    startService(intent)
-                                }
+                                ContextCompat.startForegroundService(this, intent)
 
                                 isTracking = true
                                 prefs.edit().putBoolean("tracking", true).apply()
@@ -483,14 +481,12 @@ class MainActivity : AppCompatActivity( ) {
                                 Toast.makeText(this, "Tracking Started", Toast.LENGTH_SHORT).show()
 
                             } else {
-                                Toast.makeText(this, "Location permission required", Toast.LENGTH_SHORT).show()
                                 permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                                 return@setOnClickListener
                             }
 
                         } else {
 
-                            // ✅ STOP TRACKING
                             stopService(Intent(this, LocationService::class.java))
 
                             isTracking = false
@@ -500,9 +496,7 @@ class MainActivity : AppCompatActivity( ) {
                         }
 
                         updateTrackingUI(startBtn, isTracking)
-
-
-                     }
+                    }
 
 
 
@@ -560,25 +554,92 @@ class MainActivity : AppCompatActivity( ) {
 
 
     //Map
-    private fun createCircle(lat: Double, lng: Double, radiusMeters: Double): Polygon {
-        val points = ArrayList<Point>()
-        val steps = 60
+    private fun loadAssignedGeofence(style: Style) {
 
-        for (i in 0..steps) {
-            val angle = Math.toRadians((i * 360 / steps).toDouble())
-            val dx = radiusMeters * Math.cos(angle)
-            val dy = radiusMeters * Math.sin(angle)
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-            val earthRadius = 6378137.0
-            val newLat = lat + (dy / earthRadius) * (180 / Math.PI)
-            val newLng = lng + (dx / earthRadius) * (180 / Math.PI) /
-                    Math.cos(Math.toRadians(lat))
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .get()
+            .addOnSuccessListener { document ->
 
-            points.add(Point.fromLngLat(newLng, newLat))
+                val assignedId = document.getString("geofenceassign")
+
+                if (assignedId.isNullOrEmpty()) {
+                    Log.e("RADAR", "No assigned geofence")
+                    return@addOnSuccessListener
+                }
+
+                lifecycleScope.launch {
+
+                    try {
+
+                        val response = RadarRetrofit.api.getGeofence(
+                            "prj_live_sk_2f8e1e138dd5fcf9dbb5c3537ffb75b93c083021",
+                            assignedId
+                        )
+
+                        Log.d("RADAR_DEBUG", "Geofences count: ${response.geofences.size}")
+
+                        if (response.geofences.isEmpty()) {
+                            Log.e("RADAR", "No geofence found from API")
+                            return@launch
+                        }
+
+                        val coords =
+                            response.geofences[0].geometry.coordinates[0]
+
+                        Log.d("RADAR_DEBUG", "Coordinates size: ${coords.size}")
+
+                        drawPolygonOnMap(style, coords)
+
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Geofence loaded successfully",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                    } catch (e: Exception) {
+                        Log.e("RADAR", "Failed: ${e.message}")
+                    }
+                }
+            }
+    }
+    private fun drawPolygonOnMap(
+        style: Style,
+        coordinates: List<List<Double>>
+    ) {
+
+        // Remove old layer if exists
+        style.removeLayer("assigned-geofence-layer")
+        style.removeSource("assigned-geofence-source")
+
+        val points = coordinates.map {
+            Point.fromLngLat(it[0], it[1])
         }
 
-        return Polygon.fromLngLats(listOf(points))
+        val polygon = Polygon.fromLngLats(listOf(points))
+
+        val source = GeoJsonSource(
+            "assigned-geofence-source",
+            Feature.fromGeometry(polygon)
+        )
+
+        style.addSource(source)
+
+        val layer = LineLayer(
+            "assigned-geofence-layer",
+            "assigned-geofence-source"
+        ).withProperties(
+            lineColor("#FF0000"),
+            lineWidth(4f)
+        )
+
+        style.addLayer(layer)
     }
+
+
     private fun checkGeofenceStatus(currentLat: Double, currentLng: Double) {
 
         val results = FloatArray(1)
@@ -1099,6 +1160,15 @@ private fun shareMessage() {
                     allergies = doc.getString("allergies") ?: ""
                     medicalConditions = doc.getString("conditions") ?: ""
                     medications = doc.getString("medications") ?: ""
+                    externalId = doc.getString("geofenceassign") ?:""
+                    val status = doc.getString("geofenceStatus")
+
+                    if (status == "SAFE") {
+                        updateSafetyUI(true)
+                    } else if (status == "DANGER") {
+                        updateSafetyUI(false)
+                    }
+
 
                     val greeting =
                         if (fullName.isNotEmpty()) "Hello $fullName"
@@ -1162,11 +1232,32 @@ private fun shareMessage() {
     override fun onResume() {
         super.onResume()
         mapView.onResume()
-    }
+       // val intentFilter = IntentFilter("GEOFENCE_STATUS")
+        val intentFilter = IntentFilter("GEOFENCE_STATUS")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                geofenceReceiver,
+                intentFilter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            registerReceiver(geofenceReceiver, intentFilter)
+        }
+
+
+
+
+            }
 
     override fun onPause() {
         super.onPause()
         mapView.onPause()
+       // unregisterReceiver(geofenceReceiver)
+
+           try {
+               unregisterReceiver(geofenceReceiver)
+           } catch (e: Exception) {}
+
     }
     override fun onLowMemory() {
         super.onLowMemory()

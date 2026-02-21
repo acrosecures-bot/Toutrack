@@ -9,13 +9,14 @@ plugins {
 }
 
 
+
 android {
     namespace = "com.example.tourist_main"
     compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.tourist_main"
-        minSdk = 25
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -95,7 +96,11 @@ dependencies {
     //grofence
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
-   // implementation("io.radar:sdk-android:3.+")
+
+        // ... other dependencies
+      implementation("io.radar:sdk:3.21.+")
+    //implementation("io.radar:sdk-android:3.21.+")
+
 
     // img
     implementation("io.github.jan-tennert.supabase:supabase-kt:2.0.0")

@@ -24,6 +24,6 @@ class GeofenceReceiver : BroadcastReceiver() {
                 statusIntent.putExtra("status", "Outside Safe Zone")
         }
 
-        context.sendBroadcast(statusIntent)
-    }
+        intent.setPackage(context.packageName)
+        context.sendBroadcast(intent)    }
 }
