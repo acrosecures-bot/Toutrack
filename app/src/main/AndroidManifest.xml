@@ -7,24 +7,26 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
     <uses-permission android:name="android.permission.SEND_SMS"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
 
     <uses-feature
         android:name="android.hardware.telephony"
         android:required="false" />
 
+
+
     <!-- ✅ SINGLE APPLICATION TAG -->
     <application
-        android:name=".MyApplication"
-        android:foregroundServiceType="location"
-        android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
+          android:allowBackup="true"
+        android:usesCleartextTraffic="true"
+         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@drawable/applogo"
         android:label="TourTrack"
@@ -32,6 +34,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Tourist_main"
         tools:targetApi="31">
+
 
         <!-- Activities -->
         <activity
@@ -55,17 +58,25 @@
         <service
             android:name=".LocationService"
             android:foregroundServiceType="location"
-            android:exported="false" />
+            android:exported="false"/>
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+
+        </receiver>
+
         <meta-data
             android:name="org.maplibre.android.maps.token"
             android:value="dummy" />
-        <receiver
-            android:name=".GeofenceReceiver"
-            android:exported="true"
-            android:permission="TODO" />
 
 
     </application>
+
 
 
 </manifest>

@@ -2,11 +2,11 @@ package com.example.tourist_main
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -19,7 +19,6 @@ import android.telephony.SmsManager
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.webkit.*
 import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -37,8 +36,6 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.zxing.BarcodeFormat
@@ -52,7 +49,6 @@ import java.util.Locale
 // MapLibre
 import org.maplibre.android.MapLibre
 import org.maplibre.android.annotations.MarkerOptions
-import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.style.layers.LineLayer
@@ -66,28 +62,33 @@ import org.maplibre.geojson.Polygon
  import org.maplibre.android.WellKnownTileServer
 import coil.transform.CircleCropTransformation
 import com.google.firebase.firestore.FirebaseFirestore
-import io.radar.sdk.Radar
-import io.radar.sdk.RadarTrackingOptions
+import com.google.firebase.firestore.ListenerRegistration
+import org.maplibre.android.annotations.Marker
 import org.maplibre.android.maps.Style
-import java.util.Locale.filter
-
 
 
 class MainActivity : AppCompatActivity( ) {
+    private var isFirstLocationUpdate = true
+    private lateinit var prefs: SharedPreferences
+    private lateinit var startBtn: MaterialButton
+    private var isTracking: Boolean = false
+
+    private val requestBackgroundPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+             } else {
+                Toast.makeText(this, "Background location required", Toast.LENGTH_LONG).show()
+            }
+        }
+
+    private var userMarker: Marker? = null
 
     var externalId: String? = null
-    private val geofenceReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val isSafe = intent?.getBooleanExtra("isSafe", true) ?: true
-            updateSafetyUI(isSafe)
-        }
-    }
 
 
-    private lateinit var geofencePendingIntent: PendingIntent
-    private lateinit var geofencingClient: GeofencingClient
-    private lateinit var mapView: MapView
-    private var userListener: com.google.firebase.firestore.ListenerRegistration? = null
+
+     private lateinit var mapView: MapView
+    private var userListener: ListenerRegistration? = null
 
 
     private val TAG = "TouristMain"
@@ -180,6 +181,14 @@ class MainActivity : AppCompatActivity( ) {
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        prefs = getSharedPreferences("tracking_pref", MODE_PRIVATE)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
         MapLibre.getInstance(
             this,
             null,
@@ -190,6 +199,13 @@ class MainActivity : AppCompatActivity( ) {
 
         MapLibre.getInstance(this)
         mapView.onCreate(savedInstanceState)
+
+
+       //  val prefs = getSharedPreferences("tracking_pref", MODE_PRIVATE)
+         isTracking = prefs.getBoolean("tracking", false)
+
+
+
 
 
 
@@ -281,15 +297,9 @@ class MainActivity : AppCompatActivity( ) {
             }
         }
         // init fused client
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         // Ensure user is signed in
-        val currentUser = auth.currentUser
-        if (currentUser == null) {
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
-            return
-        }
+
 
         // Register permission launcher
         permissionLauncher = registerForActivityResult(
@@ -345,23 +355,11 @@ class MainActivity : AppCompatActivity( ) {
         // Load Firestore user data
         // geof
        // mapView = findViewById(R.id.mapView)
-        geofencingClient = LocationServices.getGeofencingClient(this)
-        val intent = Intent(this, GeofenceReceiver::class.java)
-        geofencePendingIntent = PendingIntent.getBroadcast(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
         mapView.getMapAsync { map ->
 
             map.setStyle(
                 "https://api.maptiler.com/maps/streets/style.json?key=gFiXSFetCzyCEfHBHKvq"
             ) { style ->
-
-                val fusedLocationClient =
-                    LocationServices.getFusedLocationProviderClient(this)
 
                 if (ActivityCompat.checkSelfPermission(
                         this,
@@ -369,40 +367,12 @@ class MainActivity : AppCompatActivity( ) {
                     ) == PackageManager.PERMISSION_GRANTED
                 ) {
 
-                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                    // ✅ Just call function
+                    startLocationUpdates(map)
 
-                        location?.let {
+                    // ✅ Load geofence once
+                    loadAssignedGeofence(style)
 
-                            val userLatLng = LatLng(it.latitude, it.longitude)
-
-                            // Move camera
-                            map.cameraPosition = CameraPosition.Builder()
-                                .target(userLatLng)
-                                .zoom(15.0)
-                                .build()
-
-                            // Add marker
-                            map.addMarker(
-                                MarkerOptions()
-                                    .position(userLatLng)
-                                    .title("You are here")
-                            )
-                            lat = it.latitude
-                            lng = it.longitude
-                            geofenceLat = it.latitude
-                            geofenceLng = it.longitude
-
-
-
-
-                            // Draw  border (radar)
-                            loadAssignedGeofence(style)
-
-                          //  checkGeofenceStatus(it.latitude, it.longitude)
-                          //  Radar.startTracking(RadarTrackingOptions.CONTINUOUS)
-
-                        }
-                    }
                 } else {
                     ActivityCompat.requestPermissions(
                         this,
@@ -412,7 +382,6 @@ class MainActivity : AppCompatActivity( ) {
                 }
             }
         }
-
 
 
 
@@ -455,49 +424,49 @@ class MainActivity : AppCompatActivity( ) {
                         Toast.makeText(this, "🚨 Alert Button Clicked", Toast.LENGTH_SHORT).show()
                         shareMessage()
                     }
-                    val startBtn = findViewById<MaterialButton>(R.id.start_trace)
+                    startBtn = findViewById(R.id.start_trace)
 
-                    val prefs = getSharedPreferences("tracking_pref", MODE_PRIVATE)
-
-                    var isTracking = prefs.getBoolean("tracking", false)
+                    // ✅ Remove 'var' - this updates the class-level isTracking
+                    isTracking = prefs.getBoolean("tracking", false)
 
                     updateTrackingUI(startBtn, isTracking)
+
                     startBtn.setOnClickListener {
 
                         if (!isTracking) {
 
-                            if (ContextCompat.checkSelfPermission(
-                                    this,
-                                    Manifest.permission.ACCESS_FINE_LOCATION
-                                ) == PackageManager.PERMISSION_GRANTED
+                            // 🔐 Check Permission
+                            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                                != PackageManager.PERMISSION_GRANTED
                             ) {
-
-                                val intent = Intent(this, LocationService::class.java)
-                                ContextCompat.startForegroundService(this, intent)
-
-                                isTracking = true
-                                prefs.edit().putBoolean("tracking", true).apply()
-
-                                Toast.makeText(this, "Tracking Started", Toast.LENGTH_SHORT).show()
-
-                            } else {
-                                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                                requestPermissions(
+                                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                                    1001
+                                )
                                 return@setOnClickListener
                             }
 
+                            // 🔥 Start Service
+                            val intent = Intent(this, LocationService::class.java)
+                            startForegroundService(intent)
+
+                            isTracking = true
+                            prefs.edit().putBoolean("tracking", true).apply()
+
+                            updateTrackingUI(startBtn, true)
+
                         } else {
 
-                            stopService(Intent(this, LocationService::class.java))
+                            // 🛑 Stop Service
+                            val intent = Intent(this, LocationService::class.java)
+                            stopService(intent)
 
                             isTracking = false
                             prefs.edit().putBoolean("tracking", false).apply()
 
-                            Toast.makeText(this, "Tracking Stopped", Toast.LENGTH_SHORT).show()
+                            updateTrackingUI(startBtn, false)
                         }
-
-                        updateTrackingUI(startBtn, isTracking)
                     }
-
 
 
 
@@ -554,6 +523,34 @@ class MainActivity : AppCompatActivity( ) {
 
 
     //Map
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == 1001 &&
+            grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        ) {
+            val intent = Intent(this, LocationService::class.java)
+            startForegroundService(intent)
+
+            isTracking = true
+            prefs.edit().putBoolean("tracking", true).apply()
+            updateTrackingUI(startBtn, true)
+        }
+    }
+
+         private val autoSosReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            Log.d("AUTO_SOS", "Received auto SOS trigger")
+            sendSOS_SMS()  // 🔥 your existing function
+        }
+    }
+
+
     private fun loadAssignedGeofence(style: Style) {
 
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
@@ -589,6 +586,14 @@ class MainActivity : AppCompatActivity( ) {
 
                         val coords =
                             response.geofences[0].geometry.coordinates[0]
+                        // Convert [lng, lat] → LatLng
+                        val polygonPoints = coords.map {
+                            LatLng(it[1], it[0])
+                        }
+
+                            // ✅ Save to memory,
+                        PolygonStorage.save(applicationContext, polygonPoints)
+                        Log.d("POLYGON_SAVED", "Saved ${polygonPoints.size} points")
 
                         Log.d("RADAR_DEBUG", "Coordinates size: ${coords.size}")
 
@@ -642,20 +647,45 @@ class MainActivity : AppCompatActivity( ) {
 
     private fun checkGeofenceStatus(currentLat: Double, currentLng: Double) {
 
-        val results = FloatArray(1)
+        val polygonPoints = PolygonStorage.get(applicationContext) ?: return
 
-        Location.distanceBetween(
+        val isInside = isPointInsidePolygon(
             currentLat,
             currentLng,
-            geofenceLat,
-            geofenceLng,
-            results
+            polygonPoints
         )
 
-        updateSafetyUI(results[0] <= geofenceRadius)
+        updateSafetyUI(isInside)
     }
+    private fun isPointInsidePolygon(
+        lat: Double,
+        lng: Double,
+        polygon: List<LatLng>
+    ): Boolean {
 
+        var inside = false
+        var j = polygon.size - 1
 
+        for (i in polygon.indices) {
+
+            val xi = polygon[i].longitude
+            val yi = polygon[i].latitude
+            val xj = polygon[j].longitude
+            val yj = polygon[j].latitude
+
+            val intersect =
+                ((yi > lat) != (yj > lat)) &&
+                        (lng < (xj - xi) * (lat - yi) / (yj - yi + 0.0) + xi)
+
+            if (intersect) {
+                inside = !inside
+            }
+
+            j = i
+        }
+
+        return inside
+    }
     // Start bg tacking service btn behavior
     private fun updateTrackingUI(button: MaterialButton, isTracking: Boolean) {
 
@@ -678,14 +708,6 @@ class MainActivity : AppCompatActivity( ) {
 
     //For Back ground service
 
-    private fun startBackgroundLocation() {
-        val intent = Intent(this, LocationService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
-        }
-    }
 
     private fun checkAndRequestLocation() {
         if (ContextCompat.checkSelfPermission(
@@ -713,11 +735,9 @@ class MainActivity : AppCompatActivity( ) {
                 )
                 startActivity(intent)
             } else {
-                startBackgroundLocation()
-            }
+             }
         } else {
-            startBackgroundLocation()
-        }
+         }
     }
 
     //---------------------------------------- Home share loc
@@ -971,7 +991,9 @@ private fun shareMessage() {
         settingsClient.checkLocationSettings(settingsRequest)
             .addOnSuccessListener {
                 Log.d(TAG, "Device location settings satisfied -> start updates")
-                startLocationUpdates()
+                startLocationUpdates(
+                    map = TODO()
+                )
             }
             .addOnFailureListener { exception ->
                 Log.w(TAG, "Location settings not satisfied: ${exception.message}")
@@ -984,40 +1006,65 @@ private fun shareMessage() {
                 }
             }
     }
+    private fun startLocationUpdates(map: org.maplibre.android.maps.MapLibreMap) {
 
-    private fun startLocationUpdates() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Log.w(TAG, "startLocationUpdates: missing permission")
-            return
-        }
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) return
 
         if (locationCallbackInternal == null) {
+
             locationCallbackInternal = object : LocationCallback() {
                 override fun onLocationResult(result: LocationResult) {
-                    super.onLocationResult(result)
-                    val loc: Location? = result.lastLocation
-                    if (loc != null) {
-                        Log.d(TAG, "onLocationResult -> lat=${loc.latitude}, lon=${loc.longitude}")
-                        fetchWeather(loc)
-                        // If you want only first update then stop updates:
-                        stopLocationUpdates()
+
+                    val loc = result.lastLocation ?: return
+
+                    lat = loc.latitude
+                    lng = loc.longitude
+
+                    val newLatLng = LatLng(lat, lng)
+
+                    // Update marker (do NOT recreate every time)
+                    if (userMarker == null) {
+                        userMarker = map.addMarker(
+                            MarkerOptions()
+                                .position(newLatLng)
+                                .title("You are here")
+                        )
                     } else {
-                        Log.d(TAG, "onLocationResult -> location null")
+                        userMarker?.position = newLatLng
                     }
+
+                    // Move camera only first time
+                    if (isFirstLocationUpdate) {
+                        map.animateCamera(
+                            org.maplibre.android.camera.CameraUpdateFactory
+                                .newLatLngZoom(newLatLng, 15.0)
+                        )
+                        isFirstLocationUpdate = false
+                    }
+
+                    // Optional geofence check
+                    checkGeofenceStatus(lat, lng)
                 }
             }
         }
 
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30_000L)
-            .setMinUpdateIntervalMillis(10_000L)
-            .setMaxUpdateDelayMillis(60_000L)
+        val request = LocationRequest.Builder(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            1000   // 1 second
+        ).setMinUpdateIntervalMillis(1000)
             .build()
 
-        fusedLocationClient.requestLocationUpdates(request, locationCallbackInternal!!, Looper.getMainLooper())
-        Log.d(TAG, "Requested location updates (foreground)")
+        fusedLocationClient.requestLocationUpdates(
+            request,
+            locationCallbackInternal!!,
+            Looper.getMainLooper()
+        )
     }
-
-    private fun stopLocationUpdates() {
+     private fun stopLocationUpdates() {
         locationCallbackInternal?.let {
             fusedLocationClient.removeLocationUpdates(it)
             locationCallbackInternal = null
@@ -1229,34 +1276,45 @@ private fun shareMessage() {
         mapView.onStop()
         userListener?.remove()
     }
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onResume() {
         super.onResume()
-        mapView.onResume()
-       // val intentFilter = IntentFilter("GEOFENCE_STATUS")
-        val intentFilter = IntentFilter("GEOFENCE_STATUS")
+        if (::mapView.isInitialized) {
+            mapView.onResume()
+        }
+        // val intentFilter = IntentFilter("GEOFENCE_STATUS")
+
+
+
+        val filter1 = IntentFilter("AUTO_SOS_TRIGGERED")
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(
-                geofenceReceiver,
-                intentFilter,
-                Context.RECEIVER_NOT_EXPORTED
-            )
+            registerReceiver(autoSosReceiver, filter1, RECEIVER_NOT_EXPORTED)
         } else {
-            registerReceiver(geofenceReceiver, intentFilter)
+            registerReceiver(autoSosReceiver, filter1)
         }
 
 
 
 
-            }
+
+
+
+    }
 
     override fun onPause() {
         super.onPause()
-        mapView.onPause()
-       // unregisterReceiver(geofenceReceiver)
+        if (::mapView.isInitialized) {
+            mapView.onPause()
+        }
+        // unregisterReceiver(geofenceReceiver)
+        locationCallbackInternal?.let {
+            fusedLocationClient.removeLocationUpdates(it)
+        }
 
-           try {
-               unregisterReceiver(geofenceReceiver)
-           } catch (e: Exception) {}
+        unregisterReceiver(autoSosReceiver)
+
+
 
     }
     override fun onLowMemory() {
@@ -1266,7 +1324,9 @@ private fun shareMessage() {
 
     override fun onDestroy() {
         super.onDestroy()
-        mapView.onDestroy()
+        if (::mapView.isInitialized) {
+            mapView.onDestroy()
+        }
         stopLocationUpdates()
     }
 

@@ -94,12 +94,12 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
     //grofence
-    implementation("com.google.android.gms:play-services-location:21.0.1")
-
+    //implementation("com.google.android.gms:play-services-location:21.0.1")
 
         // ... other dependencies
-      implementation("io.radar:sdk:3.21.+")
+     // implementation("io.radar:sdk:3.21.+")
     //implementation("io.radar:sdk-android:3.21.+")
+
 
 
     // img
