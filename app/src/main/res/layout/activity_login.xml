@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="#FFFFFF">
+    android:background="#FFFFFF"
+    android:fitsSystemWindows="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -44,7 +45,7 @@
                 android:id="@+id/subtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="AI-powered safety monitoring"
+                android:text="safety monitoring"
                 android:textSize="13sp"
                 android:textColor="#6B7280"
                 android:layout_marginTop="6dp" />
@@ -181,14 +182,14 @@
 
             </FrameLayout>
 
-            <TextView
+          <!--  <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Forgot password?"
                 android:textColor="#581CC3"
                 android:gravity="end"
                 android:layout_marginTop="6dp"
-                android:textSize="13sp"/>
+                android:textSize="13sp"/>-->
 
             <Button
                 android:id="@+id/btnSignIn"
@@ -254,22 +255,7 @@
                     android:contentDescription="Profile Image" />
 
                 <!-- Edit Icon (overlapping using negative margin) -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="end"
-                    android:layout_marginTop="-119dp"
-                    android:layout_marginStart="-20dp"
-                    android:paddingEnd="6dp">
 
-                    <ImageView
-                        android:id="@+id/btnEditProfile"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:padding="6dp"
-                        android:src="@drawable/ic_add"
-                        android:contentDescription="Edit Profile" />
-                </LinearLayout>
 
             </LinearLayout>
             <!-- Basic fields -->
@@ -348,30 +334,7 @@
             </FrameLayout>
 
             <!-- Emergency contact -->
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="Emergency Contact" android:textStyle="bold" android:layout_marginTop="12dp"/>
 
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEE" android:layout_marginTop="6dp"/>
-
-            <EditText
-                android:id="@+id/r_emerName"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:hint="Person Name *"
-                android:inputType="textPersonName"
-                android:background="@drawable/input_bg"
-                android:padding="12dp"
-                android:layout_marginTop="8dp"/>
-
-            <EditText
-                android:id="@+id/r_emerNo"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:hint="Contact Number *"
-                android:inputType="phone"
-                android:background="@drawable/input_bg"
-                android:padding="12dp"
-                android:layout_marginTop="8dp"/>
 
             <!-- Personal details -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -383,7 +346,7 @@
                 android:id="@+id/r_dob"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:hint="Date of Birth"
+                android:hint="Date of Birth(dd/mm/yyyy)"
                 android:inputType="date"
                 android:background="@drawable/input_bg"
                 android:padding="12dp"

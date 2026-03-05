@@ -508,12 +508,23 @@
                     android:id="@+id/btnStartTour"
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
-                    android:text="Start Tracking"
+                    android:text="Start Tour "
                     android:textSize="16sp"
                     android:textAllCaps="false"
                     android:textColor="@android:color/white"
                     android:backgroundTint="#1E293B"
                     app:cornerRadius="30dp"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStopTour"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:text="Stop Tour "
+                    android:textSize="16sp"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="#F44336"
+                    app:cornerRadius="30dp"/>
+
 
             </LinearLayout>
 
@@ -524,7 +535,7 @@
             android:id="@+id/profile_page_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="gone"
+            android:visibility="visible"
             android:background="#F9FAFB"
             android:paddingBottom="30dp"
             android:scrollbars="none">
@@ -682,7 +693,7 @@
                                     style="@style/ContactRelation"
                                     android:text="Sister" />
                                 <TextView
-                                    android:id="@+id/p_primary"
+                                    android:id="@+id/p_primaryRelation"
                                     style="@style/ContactRelation"
                                     android:text="Sister" />
                             </LinearLayout>

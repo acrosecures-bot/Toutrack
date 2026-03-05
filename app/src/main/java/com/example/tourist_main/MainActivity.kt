@@ -61,13 +61,16 @@ import org.maplibre.geojson.Polygon
 
  import org.maplibre.android.WellKnownTileServer
 import coil.transform.CircleCropTransformation
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.SetOptions
 import org.maplibre.android.annotations.Marker
 import org.maplibre.android.maps.Style
 
 
 class MainActivity : AppCompatActivity( ) {
+  //  private var userId=""
     // Tour selection
     private lateinit var masterTourList: List<TourLocation>
     private var selectedGeofenceId: String? = null
@@ -200,11 +203,14 @@ class MainActivity : AppCompatActivity( ) {
         prefs = getSharedPreferences("tracking_pref", MODE_PRIVATE)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         val currentUser = auth.currentUser
+
         if (currentUser == null) {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
             return
         }
+
+        val userId = currentUser.uid
         MapLibre.getInstance(
             this,
             null,
@@ -213,8 +219,7 @@ class MainActivity : AppCompatActivity( ) {
         setContentView(R.layout.activity_main)
         mapView = findViewById(R.id.mapView)
 
-        MapLibre.getInstance(this)
-        mapView.onCreate(savedInstanceState)
+         mapView.onCreate(savedInstanceState)
 
 
        //  val prefs = getSharedPreferences("tracking_pref", MODE_PRIVATE)
@@ -443,8 +448,20 @@ class MainActivity : AppCompatActivity( ) {
 
                     // ✅ Remove 'var' - this updates the class-level isTracking
                     isTracking = prefs.getBoolean("tracking", false)
+                    if (externalId.isNullOrEmpty()) {
 
-                    updateTrackingUI(startBtn, isTracking)
+                        startBtn.isEnabled = false
+                        startBtn.alpha = 0.5f
+                        startBtn.text = "No Tour Assigned"
+
+                    } else {
+
+                        startBtn.isEnabled = true
+                        startBtn.alpha = 1f
+                        updateTrackingUI(startBtn, isTracking)
+                    }
+
+                   // updateTrackingUI(startBtn, isTracking)
 
                     startBtn.setOnClickListener {
 
@@ -488,6 +505,11 @@ class MainActivity : AppCompatActivity( ) {
                 }
                 R.id.nav_id -> {
                     idContainer.visibility = View.VISIBLE
+                    val btnStopTour = findViewById<MaterialButton>(R.id.btnStopTour)
+
+                    btnStopTour.setOnClickListener {
+                        stopTour()
+                    }
 
                     fetchGeofencesFromRest()
                 }
@@ -534,6 +556,41 @@ class MainActivity : AppCompatActivity( ) {
      }
 
     // tour select
+    private fun stopTour() {
+
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .update("geofenceassign", null)
+            .addOnSuccessListener {
+
+                Toast.makeText(this, "Tour stopped", Toast.LENGTH_SHORT).show()
+
+                // 🛑 Stop tracking service
+                val intent = Intent(this, LocationService::class.java)
+                stopService(intent)
+
+                isTracking = false
+                prefs.edit().putBoolean("tracking", false).apply()
+
+                // Update UI
+                startBtn.isEnabled = false
+                startBtn.alpha = 0.5f
+                startBtn.text = "No Tour Assigned"
+
+                updateNoTourUI()
+
+                // Remove polygon
+                mapView.getMapAsync { map ->
+                    map.getStyle { style ->
+                        style.removeLayer("assigned-geofence-layer")
+                        style.removeSource("assigned-geofence-source")
+                    }
+                }
+            }
+    }
     private fun fetchGeofencesFromRest() {
 
         lifecycleScope.launch {
@@ -647,19 +704,41 @@ class MainActivity : AppCompatActivity( ) {
 
                 } else {
 
-                    assignGeofenceToUser(selectedGeofenceId!!)
-                }
+                    assignGeofenceToUser(
+                        selectedGeofenceId!!,
+                        dropState.text.toString(),
+                        dropDistrict.text.toString(),
+                        dropPlace.text.toString()
+                    )                }
             }
     }
 
-    private fun assignGeofenceToUser(geofenceId: String) {
+    private fun assignGeofenceToUser(
+        geofenceId: String,
+        state: String,
+        district: String,
+        place: String
+    ) {
 
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        val tourData = hashMapOf(
+            "geofenceId" to geofenceId,
+            "state" to state,
+            "district" to district,
+            "place" to place,
+            "startTime" to System.currentTimeMillis()
+        )
 
         FirebaseFirestore.getInstance()
             .collection("users")
             .document(userId)
-            .update("geofenceassign", geofenceId)
+            .update(
+                mapOf(
+                    "geofenceassign" to geofenceId,
+                    "tours" to FieldValue.arrayUnion(tourData)
+                )
+            )
             .addOnSuccessListener {
 
                 Toast.makeText(
@@ -667,10 +746,14 @@ class MainActivity : AppCompatActivity( ) {
                     "Tour activated",
                     Toast.LENGTH_SHORT
                 ).show()
+
+                mapView.getMapAsync { map ->
+                    map.getStyle { style ->
+                        loadAssignedGeofence(style)
+                    }
+                }
             }
     }
-
-
     //Map
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -962,6 +1045,28 @@ private fun shareMessage() {
          zone.setChipBackgroundColorResource(R.color.sos_danger)
      }
  }
+    private fun updateNoTourUI() {
+
+        val card = findViewById<MaterialCardView>(R.id.safetyCard)
+        val icon = findViewById<ImageView>(R.id.safetyIcon)
+        val title = findViewById<TextView>(R.id.safetyTitle)
+        val location = findViewById<TextView>(R.id.location_text)
+        val zone = findViewById<Chip>(R.id.zone)
+
+        card.setCardBackgroundColor(Color.parseColor("#F3F4F6"))
+        card.strokeColor = Color.parseColor("#D1D5DB")
+
+        icon.setColorFilter(Color.GRAY)
+
+        title.text = "No Tour Selected"
+        title.setTextColor(Color.DKGRAY)
+
+        location.text = "Please select a tour"
+        location.setTextColor(Color.GRAY)
+
+        zone.text = "NO TOUR"
+        zone.setChipBackgroundColorResource(R.color.gray_500)
+    }
 
 
 
@@ -987,29 +1092,46 @@ private fun shareMessage() {
         val prefs = getSharedPreferences("sos_pref", MODE_PRIVATE)
         val isConfirmed = prefs.getBoolean("sos_confirmed", false)
 
+        val currentUser = auth.currentUser
+
+        if (currentUser == null) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
+        val userId = currentUser.uid
+
+        // ALWAYS update Firebase
+        db.collection("users")
+            .document(userId)
+            .update("sos", true)
+            .addOnSuccessListener {
+                Log.d("SOS_DEBUG", "SOS updated in Firebase")
+                resetSOSAfterDelay(userId)
+            }
+            .addOnFailureListener { e ->
+                Log.e("SOS_DEBUG", "Firebase update failed: ${e.message}")
+            }
+
         if (!isConfirmed) {
 
-            // Show confirmation only first time
             AlertDialog.Builder(this)
                 .setTitle("Emergency Alert")
                 .setMessage("Allow app to send emergency SMS automatically in future?")
                 .setCancelable(false)
                 .setPositiveButton("YES") { _, _ ->
 
-                    // Save confirmation permanently
                     prefs.edit().putBoolean("sos_confirmed", true).apply()
-
                     checkAndSendSMS()
                 }
                 .setNegativeButton("CANCEL", null)
                 .show()
 
         } else {
-            // Already confirmed once
             checkAndSendSMS()
         }
-    }
-    private fun checkAndSendSMS() {
+    }     private fun checkAndSendSMS() {
 
         if (ContextCompat.checkSelfPermission(
                 this,
@@ -1022,6 +1144,23 @@ private fun shareMessage() {
         } else {
             smsPermissionLauncher.launch(Manifest.permission.SEND_SMS)
         }
+    }
+
+    private fun resetSOSAfterDelay(userId: String) {
+
+        Handler(Looper.getMainLooper()).postDelayed({
+
+            db.collection("users")
+                .document(userId)
+                .update("sos", false)
+                .addOnSuccessListener {
+                    Log.d("SOS_DEBUG", "SOS reset to false")
+                }
+                .addOnFailureListener { e ->
+                    Log.e("SOS_DEBUG", "Failed to reset SOS: ${e.message}")
+                }
+
+        }, 15000) // 15 seconds
     }
 
     // =========================================================
@@ -1139,9 +1278,7 @@ private fun shareMessage() {
         settingsClient.checkLocationSettings(settingsRequest)
             .addOnSuccessListener {
                 Log.d(TAG, "Device location settings satisfied -> start updates")
-                startLocationUpdates(
-                    map = TODO()
-                )
+
             }
             .addOnFailureListener { exception ->
                 Log.w(TAG, "Location settings not satisfied: ${exception.message}")
@@ -1350,12 +1487,19 @@ private fun shareMessage() {
                     primaryPhone = doc.getString("phone1") ?: ""
                     secondaryName = doc.getString("name2") ?: ""
                     secondaryPhone = doc.getString("phone2") ?: ""
+                    primaryRelation = doc.getString("relation1") ?: ""
+                    secondaryRelation = doc.getString("relation2") ?: ""
+
 
                     bloodType = doc.getString("bloodType") ?: ""
                     allergies = doc.getString("allergies") ?: ""
                     medicalConditions = doc.getString("conditions") ?: ""
                     medications = doc.getString("medications") ?: ""
                     externalId = doc.getString("geofenceassign") ?:""
+                    if (externalId.isNullOrEmpty()) {
+                        updateNoTourUI()
+                    }
+
                     val status = doc.getString("geofenceStatus")
 
                     if (status == "SAFE") {
@@ -1379,18 +1523,25 @@ private fun shareMessage() {
     }
     private fun updateProfileUI() {
 
-        findViewById<TextView>(R.id.p_username).text = fullName
-        findViewById<TextView>(R.id.p_email).text = email
-        findViewById<TextView>(R.id.p_phone).text = phone
-        findViewById<TextView>(R.id.p_blood).text = bloodType
-        findViewById<TextView>(R.id.p_allergies).text = allergies
-        findViewById<TextView>(R.id.p_conditions).text = medicalConditions
-        findViewById<TextView>(R.id.p_medications).text = medications
-        findViewById<TextView>(R.id.p_primaryName).text = primaryName
-        findViewById<TextView>(R.id.p_primaryPhone).text = primaryPhone
-        findViewById<TextView>(R.id.p_secondaryName).text = secondaryName
-        findViewById<TextView>(R.id.p_secondaryPhone).text = secondaryPhone
-        findViewById<TextView>(R.id.p_secondaryRelation).text = secondaryRelation
+
+
+            findViewById<TextView>(R.id.p_username).text = fullName
+            findViewById<TextView>(R.id.p_email).text = email
+            findViewById<TextView>(R.id.p_phone).text = phone
+
+            findViewById<TextView>(R.id.p_blood).text = bloodType
+            findViewById<TextView>(R.id.p_allergies).text = allergies
+            findViewById<TextView>(R.id.p_conditions).text = medicalConditions
+            findViewById<TextView>(R.id.p_medications).text = medications
+
+            findViewById<TextView>(R.id.p_primaryName).text = primaryName
+            findViewById<TextView>(R.id.p_primaryPhone).text = primaryPhone
+            findViewById<TextView>(R.id.p_primaryRelation).text = primaryRelation
+
+            findViewById<TextView>(R.id.p_secondaryName).text = secondaryName
+            findViewById<TextView>(R.id.p_secondaryPhone).text = secondaryPhone
+            findViewById<TextView>(R.id.p_secondaryRelation).text = secondaryRelation
+
 
         val profileImageView = findViewById<ImageView>(R.id.profile_image)
 

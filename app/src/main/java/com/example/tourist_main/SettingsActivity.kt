@@ -96,8 +96,7 @@ class SettingsActivity : AppCompatActivity() {
         etMedicalConditions = findViewById(R.id.et_medical_conditions)
         etMedications = findViewById(R.id.et_medications)
 
-        swConsentLocation = findViewById(R.id.sw_consent_location)
-        swConsentKyc = findViewById(R.id.sw_consent_kyc)
+
         spLanguage = findViewById(R.id.sp_language)
 
         btnSaveTop = findViewById(R.id.btn_save_top)

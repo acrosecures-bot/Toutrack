@@ -466,7 +466,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Privacy &amp; Language"
+                android:text=" Language"
                 android:textStyle="bold"
                 android:textSize="18sp"
                 android:textColor="@color/color_text_dark"
@@ -489,49 +489,7 @@
                     android:padding="20dp"
                     android:orientation="vertical">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginBottom="15dp">
 
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Consent: Location"
-                            android:textColor="@color/color_text_dark"
-                            android:textSize="14sp" />
-
-                        <Switch
-                            android:id="@+id/sw_consent_location"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:checked="true" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginBottom="15dp">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Consent: KYC"
-                            android:textColor="@color/color_text_dark"
-                            android:textSize="14sp" />
-
-                        <Switch
-                            android:id="@+id/sw_consent_kyc"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:checked="true" />
-                    </LinearLayout>
 
 
 

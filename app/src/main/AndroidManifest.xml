@@ -41,8 +41,9 @@
             android:name=".MainActivity"
             android:exported="true" />
 
-        <activity android:name=".LoginActivity" />
-
+        <activity
+            android:name=".LoginActivity"
+            android:windowSoftInputMode="adjustResize|stateHidden"/>
         <activity
             android:name=".SplashActivity"
             android:exported="true">
