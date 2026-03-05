@@ -68,6 +68,22 @@ import org.maplibre.android.maps.Style
 
 
 class MainActivity : AppCompatActivity( ) {
+    // Tour selection
+    private lateinit var masterTourList: List<TourLocation>
+    private var selectedGeofenceId: String? = null
+
+    private val RADAR_SECRET =
+        "prj_live_sk_2f8e1e138dd5fcf9dbb5c3537ffb75b93c083021"
+
+    val isSafe = Boolean
+
+    private val geofenceUpdateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            // Catch the "isSafe" boolean we sent from the service
+            val isSafe = intent?.getBooleanExtra("isSafe", false) ?: false
+            updateSafetyUI(isSafe)
+        }
+    }
     private var isFirstLocationUpdate = true
     private lateinit var prefs: SharedPreferences
     private lateinit var startBtn: MaterialButton
@@ -335,11 +351,10 @@ class MainActivity : AppCompatActivity( ) {
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
         val homeContainer = findViewById<ScrollView>(R.id.home_page_container)
         val mapContainer = findViewById<ScrollView>(R.id.map_page_container)
-        val idContainer = findViewById<ScrollView>(R.id.id_page_container)
-        val profileContainer = findViewById<ScrollView>(R.id.profile_page_container)
+         val profileContainer = findViewById<ScrollView>(R.id.profile_page_container)
+        val idContainer = findViewById<ScrollView>(R.id.tourmanage)
         val btnLogOut: Button = findViewById(R.id.btnLogOut)
-        val QRCode : ImageView =findViewById(R.id.qrCode)
-       val zone : Chip = findViewById(R.id.zone)
+        val zone : Chip = findViewById(R.id.zone)
 
 
 
@@ -473,11 +488,8 @@ class MainActivity : AppCompatActivity( ) {
                 }
                 R.id.nav_id -> {
                     idContainer.visibility = View.VISIBLE
-                    findViewById<TextView>(R.id.idName).text = fullName
-                  //  findViewById<TextView>(R.id.r_nationality).text = "Nationality: $nationality"
-                    val qr = generateQRCode("Ganesh")
-                    QRCode.setImageBitmap(qr)
 
+                    fetchGeofencesFromRest()
                 }
                 R.id.nav_profile -> {
                     profileContainer.visibility = View.VISIBLE
@@ -521,6 +533,143 @@ class MainActivity : AppCompatActivity( ) {
         // call background service
      }
 
+    // tour select
+    private fun fetchGeofencesFromRest() {
+
+        lifecycleScope.launch {
+
+            try {
+
+                val response =
+                    RadarRetrofit.api.getGeofences(RADAR_SECRET)
+
+                val tourList = response.geofences.mapNotNull { geo ->
+
+                    val meta = geo.metadata ?: return@mapNotNull null
+
+                    Log.d("RADAR_META", "metadata = $meta")
+
+                    val state = meta["state"]?.toString() ?: return@mapNotNull null
+                    val district = meta["district"]?.toString() ?: return@mapNotNull null
+                    val place = meta["place"]?.toString() ?: return@mapNotNull null
+
+                    TourLocation(
+                        state,
+                        district,
+                        place,
+                        geo.externalId ?: geo._id
+                    )
+                }
+
+
+                setupDropdowns(tourList)
+                Log.e("RADAR", " fetch geofences: ${tourList.size}")
+
+
+            } catch (e: Exception) {
+
+                Log.e("RADAR", "Failed to fetch geofences: ${e.message}")
+            }
+        }
+    }
+
+    private fun setupDropdowns(list: List<TourLocation>) {
+
+        masterTourList = list
+
+        val dropState = findViewById<AutoCompleteTextView>(R.id.dropState)
+        val dropDistrict = findViewById<AutoCompleteTextView>(R.id.dropDistrict)
+        val dropPlace = findViewById<AutoCompleteTextView>(R.id.dropPlace)
+
+        val previewPlace = findViewById<TextView>(R.id.tvPreviewPlace)
+        val previewDistrict = findViewById<TextView>(R.id.tvPreviewDistrict)
+
+        val stateMap = list.groupBy { it.state }
+        val stateList = stateMap.keys.sorted()
+
+        dropState.setAdapter(
+            ArrayAdapter(this, android.R.layout.simple_list_item_1, stateList)
+        )
+
+        dropState.setOnItemClickListener { _, _, pos, _ ->
+
+            val selectedState = stateList[pos]
+
+            val districtMap =
+                stateMap[selectedState]!!.groupBy { it.district }
+
+            val districtList = districtMap.keys.sorted()
+
+            dropDistrict.setText("")
+            dropPlace.setText("")
+
+            dropDistrict.setAdapter(
+                ArrayAdapter(this, android.R.layout.simple_list_item_1, districtList)
+            )
+
+            dropDistrict.setOnItemClickListener { _, _, pos2, _ ->
+
+                val selectedDistrict = districtList[pos2]
+
+                val places = districtMap[selectedDistrict]!!
+
+                val placeList = places.map { it.place }
+
+                dropPlace.setAdapter(
+                    ArrayAdapter(this, android.R.layout.simple_list_item_1, placeList)
+                )
+
+                dropPlace.setOnItemClickListener { _, _, pos3, _ ->
+
+                    val selectedPlace = placeList[pos3]
+
+                    val selected =
+                        places.find { it.place == selectedPlace }
+
+                    selectedGeofenceId = selected?.geofenceId
+
+                    previewPlace.text = selectedPlace
+                    previewDistrict.text = selectedDistrict
+                }
+            }
+        }
+
+        findViewById<MaterialButton>(R.id.btnStartTour)
+            .setOnClickListener {
+
+                if (selectedGeofenceId == null) {
+
+                    Toast.makeText(
+                        this,
+                        "Select destination first",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                } else {
+
+                    assignGeofenceToUser(selectedGeofenceId!!)
+                }
+            }
+    }
+
+    private fun assignGeofenceToUser(geofenceId: String) {
+
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .update("geofenceassign", geofenceId)
+            .addOnSuccessListener {
+
+                Toast.makeText(
+                    this,
+                    "Tour activated",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+    }
+
 
     //Map
     override fun onRequestPermissionsResult(
@@ -549,7 +698,6 @@ class MainActivity : AppCompatActivity( ) {
             sendSOS_SMS()  // 🔥 your existing function
         }
     }
-
 
     private fun loadAssignedGeofence(style: Style) {
 
@@ -591,7 +739,7 @@ class MainActivity : AppCompatActivity( ) {
                             LatLng(it[1], it[0])
                         }
 
-                            // ✅ Save to memory,
+                        // ✅ Save to memory,
                         PolygonStorage.save(applicationContext, polygonPoints)
                         Log.d("POLYGON_SAVED", "Saved ${polygonPoints.size} points")
 
@@ -611,7 +759,7 @@ class MainActivity : AppCompatActivity( ) {
                 }
             }
     }
-    private fun drawPolygonOnMap(
+     private fun drawPolygonOnMap(
         style: Style,
         coordinates: List<List<Double>>
     ) {
@@ -1245,7 +1393,6 @@ private fun shareMessage() {
         findViewById<TextView>(R.id.p_secondaryRelation).text = secondaryRelation
 
         val profileImageView = findViewById<ImageView>(R.id.profile_image)
-        val profileImage = findViewById<ImageView>(R.id.p_profile_image)
 
 
         if (!profileImageUrl.isNullOrEmpty()) {
@@ -1253,10 +1400,7 @@ private fun shareMessage() {
                 crossfade(true)
                 transformations(CircleCropTransformation())
             }
-            profileImage.load(profileImageUrl) {
-                crossfade(true)
-                transformations(CircleCropTransformation())
-            }
+
         }
 
 
@@ -1293,6 +1437,8 @@ private fun shareMessage() {
         } else {
             registerReceiver(autoSosReceiver, filter1)
         }
+        val filter = IntentFilter("GEOFENCE_STATUS_CHANGED")
+        registerReceiver(geofenceUpdateReceiver, filter, RECEIVER_EXPORTED)
 
 
 
@@ -1313,6 +1459,7 @@ private fun shareMessage() {
         }
 
         unregisterReceiver(autoSosReceiver)
+        unregisterReceiver(geofenceUpdateReceiver)
 
 
 

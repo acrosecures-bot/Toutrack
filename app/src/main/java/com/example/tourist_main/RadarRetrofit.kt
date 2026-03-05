@@ -6,10 +6,14 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RadarRetrofit {
 
-    private val retrofit = Retrofit.Builder()
-        .baseUrl("https://api.radar.io/")
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
+    private const val BASE_URL = "https://api.radar.io/"
 
-    val api: RadarApi = retrofit.create(RadarApi::class.java)
+    val api: RadarApi by lazy {
+
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(RadarApi::class.java)
+    }
 }

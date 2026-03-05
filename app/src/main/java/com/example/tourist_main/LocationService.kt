@@ -124,6 +124,9 @@ class LocationService : Service() {
 
             updateNotification(newState)
             updateStateInFirebase(newState)
+            val intent = Intent("GEOFENCE_STATUS_CHANGED")
+            intent.putExtra("isSafe", isInside)
+            sendBroadcast(intent) // Sends signal to MainActivity immediately
         }
 
         // ✅ Upload location every 20 seconds

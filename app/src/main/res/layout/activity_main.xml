@@ -356,257 +356,167 @@
 
         <!-- ======================= MY ID PAGE ======================= -->
         <ScrollView
-            android:id="@+id/id_page_container"
+            android:id="@+id/tourmanage"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="visible"
-            android:background="#F9FAFB"
-            android:scrollbars="none">
+            android:fillViewport="true"
+            android:clipToPadding="false"
+            android:scrollbars="none"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="120dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:padding="24dp">
+                android:orientation="vertical">
+
+                <!-- Header -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Plan Your Tour"
+                    android:textSize="26sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="My ID"
-                    android:textColor="@android:color/black"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
+                    android:text="Select your destination to start tracking"
+                    android:textColor="#8E8E93"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="24dp"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Your official digital identity wallet."
-                    android:textColor="@android:color/darker_gray" />
 
+                <!-- Destination Card -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="4dp">
+                    android:layout_marginBottom="20dp"
+                    app:cardCornerRadius="28dp"
+                    app:cardElevation="6dp"
+                    app:cardBackgroundColor="#F3EFFA">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/gradient_id_card"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="16dp">
+                        android:padding="24dp"
+                        android:orientation="vertical">
 
-                        <FrameLayout
-                            android:layout_width="64dp"
-                            android:layout_height="64dp"
-                            android:background="@drawable/id_card_photo_bg">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="center"
-                                android:text="User"
-                                android:textColor="@color/white"
-                                android:textSize="18sp"
-                                android:textStyle="bold" />
-                            <ImageView
-                                android:id="@+id/p_profile_image"
-                                android:layout_width="60dp"
-                                android:layout_height="60dp"
-                                android:scaleType="centerCrop"/>
-
-
-
-                        </FrameLayout>
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
+                        <TextView
+                            android:text="Destination Details"
+                            android:textStyle="bold"
+                            android:textSize="18sp"
+                            android:layout_marginBottom="20dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:orientation="vertical">
+                            android:layout_width="match_parent"/>
 
-                            <TextView
-                                android:id="@+id/idName"
-                                android:layout_width="wrap_content"
+                        <!-- State Dropdown -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Select State">
+
+                            <AutoCompleteTextView
+                                android:id="@+id/dropState"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="John Doe"
-                                android:textColor="@color/white"
-                                android:textSize="18sp"
-                                android:textStyle="bold" />
+                                android:inputType="none"
+                                android:focusable="false"/>
+                        </com.google.android.material.textfield.TextInputLayout>
 
-                            <TextView
-                                android:id="@+id/nationality"
-                                android:layout_width="wrap_content"
+                        <!-- District Dropdown -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="18dp"
+                            android:hint="Select District">
+
+                            <AutoCompleteTextView
+                                android:id="@+id/dropDistrict"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Nationality: Indian"
-                                android:textColor="@color/white" />
+                                android:inputType="none"
+                                android:focusable="false"/>
+                        </com.google.android.material.textfield.TextInputLayout>
 
+                        <!-- Tourist Place Dropdown -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="18dp"
+                            android:hint="Select Tourist Place">
 
-                        </LinearLayout>
+                            <AutoCompleteTextView
+                                android:id="@+id/dropPlace"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="none"
+                                android:focusable="false"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
                     </LinearLayout>
+
                 </com.google.android.material.card.MaterialCardView>
 
+
+                <!-- Preview Card -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp">
+                    android:minHeight="120dp"
+                    android:layout_marginBottom="20dp"
+                    app:cardCornerRadius="28dp"
+                    app:cardElevation="6dp"
+                    app:cardBackgroundColor="#F3EFFA">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="center_horizontal"
-                        android:orientation="vertical"
-                        android:padding="24dp">
+                        android:padding="20dp"
+                        android:orientation="vertical">
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:id="@+id/tvPreviewPlace"
+                            android:text="No Place Selected"
+                            android:textStyle="bold"
+                            android:textSize="16sp"
                             android:layout_height="wrap_content"
-                            android:text="For Secure Verification"
-                            android:textColor="@android:color/black"
-                            android:textStyle="bold" />
-
-                        <ImageView
-                            android:id="@+id/qrCode"
-                            android:layout_width="150dp"
-                            android:layout_height="150dp"
-                            android:layout_marginTop="16dp"
-                            android:background="#374151"
-                            android:contentDescription="Scannable QR code"
-                            android:padding="4dp"
-                             />
-
+                            android:layout_width="wrap_content" />
 
                         <TextView
-                            android:layout_width="wrap_content"
+
+                            android:id="@+id/tvPreviewDistrict"
+                            android:text="Select destination above"
+                            android:textColor="#8E8E93"
+                            android:layout_marginTop="6dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Present this code to an official for secure verification."
-                            android:textAlignment="center"
-                            android:textColor="@android:color/darker_gray"
-                            android:textSize="12sp" />
+                            android:layout_width="wrap_content" />
+
                     </LinearLayout>
+
                 </com.google.android.material.card.MaterialCardView>
 
-                <TextView
+
+                <!-- Start Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStartTour"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:text="Recent Verification History"
-                    android:textColor="@android:color/black"
-                    android:textStyle="bold" />
+                    android:layout_height="60dp"
+                    android:text="Start Tracking"
+                    android:textSize="16sp"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="#1E293B"
+                    app:cornerRadius="30dp"/>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="vertical">
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        app:cardCornerRadius="8dp"
-                        app:cardElevation="1dp">
-
-                        <RelativeLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:padding="12dp">
-
-                            <ImageView
-                                android:id="@+id/history_icon1"
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:layout_centerVertical="true"
-                                android:contentDescription="Building icon"
-                                android:src="@drawable/ic_buildings" />
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_centerVertical="true"
-                                android:layout_marginStart="12dp"
-                                android:layout_toEndOf="@id/history_icon1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Hotel Taj Mahal Palace"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Checked In"
-                                    android:textSize="12sp" />
-                            </LinearLayout>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentEnd="true"
-                                android:layout_centerVertical="true"
-                                android:text="16 Sep 2025, 6:18 PM"
-                                android:textSize="12sp" />
-                        </RelativeLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        app:cardCornerRadius="8dp"
-                        app:cardElevation="1dp">
-
-                        <RelativeLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:padding="12dp">
-
-                            <ImageView
-                                android:id="@+id/history_icon2"
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:layout_centerVertical="true"
-                                android:contentDescription="Check mark icon"
-                                android:src="@drawable/ic_check_circle" />
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_centerVertical="true"
-                                android:layout_marginStart="12dp"
-                                android:layout_toEndOf="@id/history_icon2"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Mumbai Police Checkpoint"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Identity Verified"
-                                    android:textSize="12sp" />
-                            </LinearLayout>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentEnd="true"
-                                android:layout_centerVertical="true"
-                                android:text="16 Sep 2025, 4:05 PM"
-                                android:textSize="12sp" />
-                        </RelativeLayout>
-                    </com.google.android.material.card.MaterialCardView>
-                </LinearLayout>
             </LinearLayout>
+
         </ScrollView>
 
         <!-- ======================= PROFILE PAGE ======================= -->
