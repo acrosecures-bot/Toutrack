@@ -41,8 +41,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var etMedicalConditions: EditText
     private lateinit var etMedications: EditText
 
-    private lateinit var swConsentLocation: Switch
-    private lateinit var swConsentKyc: Switch
+
     private lateinit var spLanguage: Spinner
 
     private lateinit var btnSaveTop: Button
@@ -222,10 +221,6 @@ class SettingsActivity : AppCompatActivity() {
 
             val meds = etMedications.text.toString().trim()
             if (meds.isNotEmpty()) updates["medications"] = meds
-
-            updates["privacy.consentLocation"] = swConsentLocation.isChecked
-            updates["privacy.consentKyc"] = swConsentKyc.isChecked
-
             val language = spLanguage.selectedItem?.toString()
             if (!language.isNullOrEmpty())
                 updates["language"] = language

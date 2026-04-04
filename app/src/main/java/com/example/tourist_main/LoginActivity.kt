@@ -48,8 +48,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var r_email: EditText
     private lateinit var r_password: EditText
     private lateinit var r_confirm: EditText
-    private lateinit var r_emerName: EditText
-    private lateinit var r_emerNo: EditText
+
     private lateinit var r_dob: EditText
     private lateinit var r_nationality: EditText
     private lateinit var r_address: EditText
@@ -152,8 +151,7 @@ class LoginActivity : AppCompatActivity() {
             val email = r_email.text.toString().trim()
             val pass = r_password.text.toString().trim()
             val confirm = r_confirm.text.toString().trim()
-            val emerName = r_emerName.text.toString().trim()
-            val emerNo = r_emerNo.text.toString().trim()
+
             val dob = r_dob.text.toString().trim()
             val nationality = r_nationality.text.toString().trim()
             val address = r_address.text.toString().trim()
@@ -170,9 +168,7 @@ class LoginActivity : AppCompatActivity() {
             if (pass.length < 6) { r_password.error = "Password must be at least 6 characters"; return@setOnClickListener }
             if (pass != confirm) { r_confirm.error = "Passwords don't match"; return@setOnClickListener }
             if (!r_agree.isChecked) { Toast.makeText(this, "Agree to Terms & Privacy", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
-            if (emerName.isEmpty()) { r_emerName.error = "Emergency contact name is required"; return@setOnClickListener }
-            if (emerNo.isEmpty()) { r_emerNo.error = "Emergency contact number is required"; return@setOnClickListener }
-            if (dob.isEmpty()) { r_dob.error = "Date of birth is required"; return@setOnClickListener }
+             if (dob.isEmpty()) { r_dob.error = "Date of birth is required"; return@setOnClickListener }
             if (nationality.isEmpty()) { r_nationality.error = "Nationality is required"; return@setOnClickListener }
             if (address.isEmpty()) { r_address.error = "Address is required"; return@setOnClickListener }
 
@@ -198,9 +194,7 @@ class LoginActivity : AppCompatActivity() {
                                 "gender" to gender,
                                 "mobile" to mobile,
                                 "email" to email,
-                                "emerName" to emerName,
-                                "emerNo" to emerNo,
-                                "dob" to dob,
+                                 "dob" to dob,
                                 "nationality" to nationality,
                                 "address" to address,
                                 "createdAt" to System.currentTimeMillis(),

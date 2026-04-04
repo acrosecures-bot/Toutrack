@@ -1615,7 +1615,7 @@ private fun shareMessage() {
 
 
     }
-    override fun onLowMemory() {
+    override fun onLowMemory() {37
         super.onLowMemory()
         mapView.onLowMemory()
     }
