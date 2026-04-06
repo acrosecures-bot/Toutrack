@@ -99,6 +99,29 @@ class LoginActivity : AppCompatActivity() {
         r_confirm = findViewById(R.id.r_confirm)
 
         r_dob = findViewById(R.id.r_dob)
+        r_dob.setOnClickListener {
+
+            val calendar = java.util.Calendar.getInstance()
+
+            val year = calendar.get(java.util.Calendar.YEAR)
+            val month = calendar.get(java.util.Calendar.MONTH)
+            val day = calendar.get(java.util.Calendar.DAY_OF_MONTH)
+
+            val datePicker = android.app.DatePickerDialog(
+                this,
+                { _, selectedYear, selectedMonth, selectedDay ->
+
+                    val formattedDate =
+                        "$selectedDay/${selectedMonth + 1}/$selectedYear"
+
+                    r_dob.setText(formattedDate)
+
+                },
+                year, month, day
+            )
+
+            datePicker.show()
+        }
         r_nationality = findViewById(R.id.r_nationality)
         r_address = findViewById(R.id.r_address)
         r_agree = findViewById(R.id.r_agree)
@@ -157,6 +180,8 @@ class LoginActivity : AppCompatActivity() {
             val address = r_address.text.toString().trim()
 
             var imageUrl: String? = null
+
+
 
             // ✅ Validation FIRST
             if (fullName.isEmpty()) { r_fullName.error = "Full name is required"; return@setOnClickListener }

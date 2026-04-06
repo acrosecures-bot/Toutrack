@@ -346,8 +346,9 @@
                 android:id="@+id/r_dob"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:hint="Date of Birth(dd/mm/yyyy)"
-                android:inputType="date"
+                android:hint="Date of Birth (dd/mm/yyyy)"
+                android:focusable="false"
+                android:clickable="true"
                 android:background="@drawable/input_bg"
                 android:padding="12dp"
                 android:layout_marginTop="8dp"/>

@@ -75,7 +75,6 @@ class SettingsActivity : AppCompatActivity() {
 
         // Bind UI
         etName = findViewById(R.id.et_full_name)
-        etEmail = findViewById(R.id.et_email)
         etPhone = findViewById(R.id.et_phone)
 
         etPrimaryName = findViewById(R.id.et_primary_name)
@@ -176,8 +175,7 @@ class SettingsActivity : AppCompatActivity() {
             val name = etName.text.toString().trim()
             if (name.isNotEmpty()) updates["fullName"] = name
 
-            val email = etEmail.text.toString().trim()
-            if (email.isNotEmpty()) updates["email"] = email
+
 
             val phone = etPhone.text.toString().trim()
             if (phone.isNotEmpty()) updates["mobile"] = phone

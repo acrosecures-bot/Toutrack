@@ -506,6 +506,7 @@ class MainActivity : AppCompatActivity( ) {
                 R.id.nav_id -> {
                     idContainer.visibility = View.VISIBLE
                     val btnStopTour = findViewById<MaterialButton>(R.id.btnStopTour)
+                    loadTourData()   // ✅ ADD THIS
 
                     btnStopTour.setOnClickListener {
                         stopTour()
@@ -556,6 +557,83 @@ class MainActivity : AppCompatActivity( ) {
      }
 
     // tour select
+    private fun loadTourData() {
+
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        val currentTourView = findViewById<TextView>(R.id.tvCurrentTour)
+        val historyContainer = findViewById<LinearLayout>(R.id.historyContainer)
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .get()
+            .addOnSuccessListener { doc ->
+
+                historyContainer.removeAllViews()
+
+                val tours = doc.get("tours") as? List<Map<String, Any>>
+
+
+                if (!tours.isNullOrEmpty()) {
+
+                    // 🔥 CURRENT TOUR = LAST ITEM
+                    val activeTour = tours.findLast {
+                        it["status"] == "ACTIVE"
+                    }
+
+                    if (activeTour != null) {
+                        val place = activeTour["place"] ?: "Unknown"
+                        val district = activeTour["district"] ?: ""
+
+                        currentTourView.text = "📍 $place, $district"
+                    } else {
+                        currentTourView.text = "No Active Tour"
+                    }
+
+
+
+
+                    // 🔹 HISTORY
+                    tours
+                        .filter { it["status"] == "COMPLETED" }   // only history
+                        .reversed()
+                        .forEach { tour ->
+
+                            val p = tour["place"] ?: ""
+                            val d = tour["district"] ?: ""
+
+                            val start = tour["startTime"] as? Long ?: 0L
+                            val end = tour["endTime"] as? Long ?: 0L
+
+                            val duration = if (end > 0) {
+                                val diff = (end - start) / (1000 * 60)
+                                "$diff min"
+                            } else "Ongoing"
+
+                             val item = TextView(this)
+                            item.text = """
+📍 $p, $d
+🕒 ${formatTime(start)}
+⏱ $duration
+        """.trimIndent()
+                            item.setPadding(16, 16, 16, 16)
+
+                            historyContainer.addView(item)
+                        }
+
+                } else {
+                    currentTourView.text = "No Active Tour"
+                }
+            }
+    }
+    private fun formatTime(timestamp: Long): String {
+        val sdf = java.text.SimpleDateFormat(
+            "dd MMM yyyy, hh:mm a",
+            java.util.Locale.getDefault()
+        )
+        return sdf.format(java.util.Date(timestamp))
+    }
     private fun stopTour() {
 
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
@@ -563,32 +641,80 @@ class MainActivity : AppCompatActivity( ) {
         FirebaseFirestore.getInstance()
             .collection("users")
             .document(userId)
-            .update("geofenceassign", null)
-            .addOnSuccessListener {
+            .get()
+            .addOnSuccessListener { doc ->
 
-                Toast.makeText(this, "Tour stopped", Toast.LENGTH_SHORT).show()
+                val tours = doc.get("tours") as? List<Map<String, Any>>
+                    ?: return@addOnSuccessListener
 
-                // 🛑 Stop tracking service
-                val intent = Intent(this, LocationService::class.java)
-                stopService(intent)
+                if (tours.isNotEmpty()) {
 
-                isTracking = false
-                prefs.edit().putBoolean("tracking", false).apply()
+                    val updatedTours = tours.mapIndexed { index, tour ->
 
-                // Update UI
-                startBtn.isEnabled = false
-                startBtn.alpha = 0.5f
-                startBtn.text = "No Tour Assigned"
-
-                updateNoTourUI()
-
-                // Remove polygon
-                mapView.getMapAsync { map ->
-                    map.getStyle { style ->
-                        style.removeLayer("assigned-geofence-layer")
-                        style.removeSource("assigned-geofence-source")
+                        if (index == tours.size - 1) {
+                            // 🔥 LAST TOUR → COMPLETE IT
+                            val updated = tour.toMutableMap()
+                            updated["status"] = "COMPLETED"
+                            updated["endTime"] = System.currentTimeMillis()
+                            updated
+                        } else {
+                            tour
+                        }
                     }
+
+                    FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(userId)
+                        .update(
+                            mapOf(
+                                "geofenceassign" to null,
+                                "tours" to updatedTours
+                            )
+                        )
+                        .addOnSuccessListener {
+
+                            Toast.makeText(this, "Tour stopped", Toast.LENGTH_SHORT).show()
+
+                            // =========================
+                            // 🔴 STOP TRACKING (IMPORTANT)
+                            // =========================
+
+                            // 1️⃣ Stop Foreground Service
+                            val intent = Intent(this, LocationService::class.java)
+                            stopService(intent)
+
+                            // 2️⃣ Stop Activity Location Updates
+                            stopLocationUpdates()
+
+                            // 3️⃣ Reset tracking flag
+                            isTracking = false
+                            prefs.edit().putBoolean("tracking", false).apply()
+
+                            // 4️⃣ Update button UI
+                            if (::startBtn.isInitialized) {
+                                updateTrackingUI(startBtn, false)
+                            }
+
+                            // 🧹 CLEAR GEOFENCE (IMPORTANT)
+                            clearGeofenceFromMap()
+
+                            // 🧹 CLEAR STORED POLYGON
+                            PolygonStorage.clear(applicationContext)
+
+                            // =========================
+                            // UI UPDATE
+                            // =========================
+                            loadTourData()
+                            updateNoTourUI()
+                        }
+
+                        .addOnFailureListener {
+                            Toast.makeText(this, "Failed to stop tour", Toast.LENGTH_SHORT).show()
+                        }
                 }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error loading tours", Toast.LENGTH_SHORT).show()
             }
     }
     private fun fetchGeofencesFromRest() {
@@ -709,7 +835,10 @@ class MainActivity : AppCompatActivity( ) {
                         dropState.text.toString(),
                         dropDistrict.text.toString(),
                         dropPlace.text.toString()
-                    )                }
+
+                    )
+                    loadTourData()
+                }
             }
     }
 
@@ -727,7 +856,8 @@ class MainActivity : AppCompatActivity( ) {
             "state" to state,
             "district" to district,
             "place" to place,
-            "startTime" to System.currentTimeMillis()
+            "startTime" to System.currentTimeMillis(),
+            "status" to "ACTIVE"
         )
 
         FirebaseFirestore.getInstance()
@@ -755,6 +885,25 @@ class MainActivity : AppCompatActivity( ) {
             }
     }
     //Map
+    private fun clearGeofenceFromMap() {
+
+        mapView.getMapAsync { map ->
+            map.getStyle { style ->
+
+                // Remove layer
+                if (style.getLayer("assigned-geofence-layer") != null) {
+                    style.removeLayer("assigned-geofence-layer")
+                }
+
+                // Remove source
+                if (style.getSource("assigned-geofence-source") != null) {
+                    style.removeSource("assigned-geofence-source")
+                }
+
+                Log.d("MAP", "Geofence removed from map")
+            }
+        }
+    }
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -877,6 +1026,12 @@ class MainActivity : AppCompatActivity( ) {
 
 
     private fun checkGeofenceStatus(currentLat: Double, currentLng: Double) {
+
+        // 🚫 STOP if no active tour
+        if (externalId.isNullOrEmpty()) {
+            updateNoTourUI()
+            return
+        }
 
         val polygonPoints = PolygonStorage.get(applicationContext) ?: return
 
@@ -1167,7 +1322,7 @@ private fun shareMessage() {
 
     // ================= SEND SMS OFFLINE (INSERTED) =================
     private fun sendSOS_SMS() {
-        val message = "My Location:\\nhttps://www.google.com/maps?q=$lat,$lng"
+        val message = "🚨 EMERGENCY 🚨\nI need help! Here is my location:\n📍 https://www.google.com/maps?q=$lat,$lng"
 
         val smsManager = SmsManager.getDefault()
         val contacts = getEmergencyContacts()

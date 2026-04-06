@@ -514,6 +514,26 @@
                     android:textColor="@android:color/white"
                     android:backgroundTint="#1E293B"
                     app:cornerRadius="30dp"/>
+
+
+                <!-- ================= CURRENT TOUR ================= -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Current Tour"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:layout_marginTop="20dp"/>
+
+
+                <TextView
+                    android:id="@+id/tvCurrentTour"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="No Active Tour"
+                    android:padding="10dp"
+                    android:background="#E5E7EB"
+                    android:layout_marginTop="8dp"/>
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnStopTour"
                     android:layout_width="match_parent"
@@ -525,6 +545,22 @@
                     android:backgroundTint="#F44336"
                     app:cornerRadius="30dp"/>
 
+                <!-- ================= TOUR HISTORY ================= -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tour History"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:layout_marginTop="20dp"/>
+
+                <LinearLayout
+                    android:id="@+id/historyContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="8dp"/>
+
 
             </LinearLayout>
 
@@ -535,7 +571,7 @@
             android:id="@+id/profile_page_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="visible"
+            android:visibility="gone"
             android:background="#F9FAFB"
             android:paddingBottom="30dp"
             android:scrollbars="none">
