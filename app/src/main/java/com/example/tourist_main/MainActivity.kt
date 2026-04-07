@@ -675,35 +675,43 @@ class MainActivity : AppCompatActivity( ) {
 
                             Toast.makeText(this, "Tour stopped", Toast.LENGTH_SHORT).show()
 
-                            // =========================
-                            // 🔴 STOP TRACKING (IMPORTANT)
-                            // =========================
+                            FirebaseFirestore.getInstance()
+                                .collection("user_locations")
+                                .document(userId)
+                                .delete()
+                                .addOnSuccessListener {
+                                    Log.d("TourTrack", "Live location wiped. Web marker removed.")
+                                }
 
-                            // 1️⃣ Stop Foreground Service
+
+                            //  STOP TRACKING (IMPORTANT)
+
+
+                            // Stop Foreground Service
                             val intent = Intent(this, LocationService::class.java)
                             stopService(intent)
 
-                            // 2️⃣ Stop Activity Location Updates
+                            //   Stop Activity Location Updates
                             stopLocationUpdates()
 
-                            // 3️⃣ Reset tracking flag
+                            //   Reset tracking flag
                             isTracking = false
                             prefs.edit().putBoolean("tracking", false).apply()
 
-                            // 4️⃣ Update button UI
+                            //   Update button UI
                             if (::startBtn.isInitialized) {
                                 updateTrackingUI(startBtn, false)
                             }
 
-                            // 🧹 CLEAR GEOFENCE (IMPORTANT)
+                            //   CLEAR GEOFENCE (IMPORTANT)
                             clearGeofenceFromMap()
 
-                            // 🧹 CLEAR STORED POLYGON
+                            //   CLEAR STORED POLYGON
                             PolygonStorage.clear(applicationContext)
 
-                            // =========================
+
                             // UI UPDATE
-                            // =========================
+
                             loadTourData()
                             updateNoTourUI()
                         }
